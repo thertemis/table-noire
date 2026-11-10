@@ -19,12 +19,12 @@ render = function () {
 /* Module check: each file of the app (see web/README.md) defines these names; a file that failed to load
    (flaky network, partial update) would leave the app half-working, so say it plainly. */
 {
-  const MODULES = { 'i18n.js': 'setLang', 'app.js': 'renderFiche', 'fidgets.js': 'packBento', 'portrait.js': 'portraitHtml', 'settings.js': 'applySettings', 'online.js': 'enterCampaign',
+  const MODULES = { 'i18n.js': 'applyServerLang', 'app.js': 'renderFiche', 'fidgets.js': 'packBento', 'portrait.js': 'portraitHtml', 'settings.js': 'applySettings', 'online.js': 'enterCampaign',
     'security.js': 'cleanPortrait', 'sheet.js': 'loadSheet', 'inventory.js': 'loadInventory', 'world.js': 'loadWorld', 'equipment.js': 'renderEquipment',
     'templates.js': 'applyLayout', 'campaign.js': 'subscribeCampaign', 'rolls.js': 'sheetRoll', 'initiative.js': 'renderIniBar', 'reveal.js': 'showReveal',
     'fog.js': 'placeFog', 'gmtools.js': 'renderSessions', 'backup.js': 'exportCampaign', 'comfort.js': 'retryPending', 'library.js': 'libExport', 'notebook.js': 'renderNotebook', 'npc.js': 'renderNpcLibrary', 'images.js': 'openCropper' };
   // typeof on each binding: works for function declarations and for the const of search.js (SRCH)
-  const has = { setLang: typeof setLang, renderFiche: typeof renderFiche, packBento: typeof packBento, portraitHtml: typeof portraitHtml, applySettings: typeof applySettings,
+  const has = { applyServerLang: typeof applyServerLang, renderFiche: typeof renderFiche, packBento: typeof packBento, portraitHtml: typeof portraitHtml, applySettings: typeof applySettings,
     enterCampaign: typeof enterCampaign, cleanPortrait: typeof cleanPortrait, loadSheet: typeof loadSheet, loadInventory: typeof loadInventory,
     loadWorld: typeof loadWorld, renderEquipment: typeof renderEquipment, applyLayout: typeof applyLayout, subscribeCampaign: typeof subscribeCampaign,
     sheetRoll: typeof sheetRoll, renderIniBar: typeof renderIniBar, showReveal: typeof showReveal, placeFog: typeof placeFog, logChange: typeof logChange,

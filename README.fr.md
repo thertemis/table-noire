@@ -69,7 +69,9 @@ backend.
   DuckDuckGo.
 
 **Langues**
-- Interface en **français** et en **anglais** : choix sur l'écran de connexion (langue du navigateur par défaut).
+- Interface en **français** et en **anglais**, choisie par l'admin pour tout le serveur (**Paramètres** sur l'écran des
+  campagnes, ou **Paramètres du serveur** dans les paramètres de campagne) : automatique (langue de chaque navigateur),
+  français ou anglais.
   Les fiches par défaut des nouvelles campagnes sont créées dans la langue choisie.
 
 **Confort et robustesse**
@@ -105,7 +107,7 @@ flowchart LR
     P["GitHub Pages<br/>(ou Cloudflare Pages)"]
   end
   subgraph Serveur Appwrite
-    T[("TablesDB<br/>23 tables")]
+    T[("TablesDB<br/>24 tables")]
     S[("Storage<br/>portraits, cartes…")]
     F["Functions Node 22<br/>admin · roll-dice · player-action<br/>apply-visibility · redeem-invite<br/>guard-signup · image-search"]
     R(("Realtime<br/>WebSocket"))

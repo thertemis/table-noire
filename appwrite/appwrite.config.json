@@ -206,6 +206,35 @@
       ]
     },
     {
+      "$id": "app_settings",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"any\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Réglages du serveur",
+      "enabled": true,
+      "rowSecurity": false,
+      "columns": [
+        {
+          "key": "lang",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "auto",
+            "fr",
+            "en"
+          ],
+          "required": false,
+          "array": false,
+          "default": "auto"
+        }
+      ],
+      "indexes": []
+    },
+    {
       "$id": "invites",
       "$permissions": [
         "create(\"label:admin\")",

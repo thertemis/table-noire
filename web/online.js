@@ -12,7 +12,7 @@ const ME = { user: null, isAdmin: false, camp: null, role: null, chars: [], char
 const ONLINE = { unsub: null, holding: false, held: [] };
 
 /* ---------------------------------------------------------------- helpers */
-const BUILD = '2026-11-10.29';
+const BUILD = '2026-11-10.30';
 const loginEmail = id => (id.includes('@') ? id.trim() : `${id.trim().toLowerCase()}@players.tablenoire.invalid`);
 const appLink = (kind, token) => `${location.origin}${location.pathname}?${kind}=${token}`;
 async function call(functionId, body) {
@@ -81,9 +81,15 @@ gate.id = 'gate';
 document.body.appendChild(gate);
 
 const brandHtml = `<div class="gate-brand"><span class="brand-mark"></span><b>TABLE NOIRE</b></div>`;
+/** Start-up / loading screen: the brand and a short message, in place of the gate (same look as index.html's #boot). */
+function loading(msg = '') {
+  gate.hidden = true; document.body.classList.add('gated');
+  const b = $('#boot'); b.hidden = false; b.querySelector('.boot-msg').textContent = msg;
+}
 function gateScreen(html, wide = false) {
   gate.hidden = false; document.body.classList.add('gated');
-  gate.innerHTML = `<div class="gate-box ${wide ? 'wide' : ''}">${brandHtml}${html}${langSwitchHtml()}</div>`;
+  gate.innerHTML = `<div class="gate-box ${wide ? 'wide' : ''}">${brandHtml}${html}</div>`;
+  $("#boot").hidden = true;
   const f = gate.querySelector('.field'); if (f) f.focus();
 }
 const gateErr = m => { const e = gate.querySelector('.gate-err'); if (e) e.textContent = m || ''; };
@@ -113,7 +119,7 @@ function showRedeem(kind, token) {
 }
 
 async function showCampaigns() {
-  gateScreen(`<p class="hint" style="text-align:center">Chargement des campagnes…</p>`, true);
+  loading('Chargement des campagnes…');
   let list = [];
   try {
     if (ME.isAdmin) list = await rows('campaigns', [AW.Q.orderAsc('name')]);
@@ -128,7 +134,7 @@ async function showCampaigns() {
   const card = c => `<button class="camp" data-gate="enter" data-id="${c.$id}"><b>${esc(c.name)}</b><p>${esc(c.description || '')}</p>
     <div class="chips"><span class="chip">MJ : ${esc(ME.names[c.gmUserId] || '—')}</span>${c.sessionNo ? `<span class="chip">Séance ${c.sessionNo}</span>` : ''}${c.archived ? '<span class="chip">Archivée</span>' : ''}</div></button>`;
   gateScreen(`<div class="tile"><div class="tile-head"><span class="led"></span><h3 class="tile-title">Campagnes</h3><span class="grow"></span>
-      ${ME.isAdmin ? `<button class="btn" data-gate="campaigns">${ic('grid')}Gestionnaire</button><button class="btn" data-gate="users">${ic('user')}Utilisateurs</button>` : ''}
+      ${ME.isAdmin ? `<button class="btn" data-gate="campaigns">${ic('grid')}Gestionnaire</button><button class="btn" data-gate="users">${ic('user')}Utilisateurs</button><button class="btn" data-gate="server">${ic('layout')}Paramètres</button>` : ''}
       <button class="btn" data-gate="logout">Déconnexion</button></div>
     ${active.length ? `<div class="camp-list">${active.map(card).join('')}</div>` : `<p class="hint">${ME.isAdmin ? 'Aucune campagne. Ouvre le gestionnaire pour en créer une.' : 'Tu ne fais encore partie d’aucune campagne. Le MJ doit t’y ajouter.'}</p>`}
     ${archived.length ? `<h4 class="tile-title" style="display:inline-block;margin-top:14px">Archivées</h4><div class="camp-list" style="margin-top:10px">${archived.map(card).join('')}</div>` : ''}
@@ -141,7 +147,7 @@ async function loadNames() {
 }
 
 async function enterCampaign(id) {
-  gateScreen(`<p class="hint" style="text-align:center">Ouverture de la campagne…</p>`);
+  loading('Ouverture de la campagne…');
   try {
     const camp = await AW.db.getRow({ databaseId: TN.db, tableId: 'campaigns', rowId: id });
     let role = null;
@@ -160,7 +166,8 @@ async function enterCampaign(id) {
     $('#appName').textContent = (camp.name || 'TABLE NOIRE').toUpperCase();
     $('#sessLine').textContent = camp.sessionNo ? `SÉANCE ${camp.sessionNo}${camp.sessionName ? ' · ' + camp.sessionName.toUpperCase() : ''}` : (role === 'gm' ? 'MJ' : 'JOUEUR');
     await startDiceLog();
-    gate.hidden = true; document.body.classList.remove('gated');
+    if (typeof preloadCampaign === 'function') await preloadCampaign();   // the first sheet is ready before the app shows
+    gate.hidden = true; $('#boot').hidden = true; document.body.classList.remove('gated');
     if (typeof schedulePack === 'function') schedulePack();   // tiles were measured while the app was hidden
     render();
   } catch (e) { toast(errMsg(e)); showCampaigns(); }
@@ -181,6 +188,7 @@ gate.addEventListener('click', async e => {
   if (a === 'enter') enterCampaign(b.dataset.id);
   if (a === 'campaigns') campaignsModal();
   if (a === 'users') usersModal();
+  if (a === 'server') serverModal();
 });
 gate.addEventListener('submit', async e => {
   e.preventDefault();
@@ -481,6 +489,35 @@ async function startOnline() {
   const q = new URLSearchParams(location.search);
   if (q.get('invite')) return showRedeem('invite', q.get('invite'));
   if (q.get('reset')) return showRedeem('reset', q.get('reset'));
-  try { await AW.account.get(); await afterLogin(); } catch (_) { showLogin(); }
+  loading();
+  // the server language and the session are asked together; a language change reloads before anything shows
+  const [reload, user] = await Promise.all([syncServerLang(), AW.account.get().catch(() => null)]);
+  if (reload) return;
+  if (!user) return showLogin();
+  try { await afterLogin(); } catch (_) { showLogin(); }
 }
+
+/* ---------------------------------------------------------------- server settings (admin): interface language */
+async function serverLang() {
+  try { return (await AW.db.getRow({ databaseId: TN.db, tableId: 'app_settings', rowId: 'global' })).lang || 'auto'; } catch (_) { return 'auto'; }
+}
+async function syncServerLang() { return applyServerLang(await serverLang()); }
+async function serverModal() {
+  const v = await serverLang();
+  const opts = [['auto', 'Automatique (langue du navigateur)'], ['fr', 'Français'], ['en', 'English']];
+  openModal(`<h3>Paramètres du serveur</h3>
+    <div class="form"><label>Langue de l’interface<select class="field" id="srvLang">${opts.map(([k, l]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+    <p class="hint">S’applique à tous les utilisateurs de ce serveur, écran de connexion compris. « Automatique » suit la langue de chaque navigateur.</p>
+    <div class="modal-acts"><span class="grow"></span><button class="btn orange" data-act="closeModal">Fermer</button></div>`);
+}
+document.addEventListener('change', async e => {
+  if (e.target.id !== 'srvLang' || !ME.isAdmin) return;
+  const lang = e.target.value, base = { databaseId: TN.db, tableId: 'app_settings', rowId: 'global' };
+  try {
+    try { await AW.db.updateRow({ ...base, data: { lang } }); }
+    catch (err) { if (err.code !== 404) throw err; await AW.db.createRow({ ...base, data: { lang } }); }
+    toast('Langue enregistrée');
+    setTimeout(() => applyServerLang(lang), 600);
+  } catch (err) { toast('Enregistrement impossible : ' + errMsg(err)); }
+});
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(startOnline, 0)); else startOnline();

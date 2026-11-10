@@ -341,9 +341,11 @@ enterCampaign = async function (id) {
   if (SH.unsub) { SH.unsub(); SH.unsub = null; }
   SH.charId = null;
   await _enterCampaign(id);
-  if (!ME.camp) return;
+};
+// called by enterCampaign while the start-up screen is still up: the app shows with the real sheet, never the mockup's
+async function preloadCampaign() {
   const first = ME.charId || (ME.chars[0] && ME.chars[0].$id) || null;
   await loadSheet(first);
-};
+}
 const _leave = leaveCampaign;
 leaveCampaign = function () { if (SH.unsub) { SH.unsub(); SH.unsub = null; } SH.charId = null; _leave(); };

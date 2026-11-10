@@ -59,6 +59,9 @@ TABLES = [
       bl('allowPlayerLayout', True), bl('archived'), tx('equipSlots'), tx('sheetLayout'), vc('rollStat', 128), vc('rollSkill', 128), tx('initiative'), tx('reveal')], []),
     ('profiles', 'Profils', True, perms(read=[USERS], create=[ADMIN], update=[ADMIN], delete=[ADMIN]),
      [vc('userId', 36, True), vc('username', 64, True), vc('color', 16)], [ix('u_user', ['userId'], 'unique')]),
+    # server-wide settings, one row 'global' (interface language): readable before sign-in, written by the admin only
+    ('app_settings', 'Réglages du serveur', False, perms(read=['any'], create=[ADMIN], update=[ADMIN], delete=[ADMIN]),
+     [en('lang', ['auto', 'fr', 'en'], 'auto')], []),
     ('invites', 'Invitations', True, perms(**ADMIN_ALL),
      [vc('token', 64, True), en('kind', ['signup', 'reset'], 'signup'), vc('userId', 36), vc('campaignId', 36),
       en('role', ['player', 'gm'], 'player'), vc('note', 128), vc('createdBy', 36), dt('expiresAt'), vc('usedBy', 36), dt('usedAt')],

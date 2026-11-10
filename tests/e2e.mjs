@@ -163,6 +163,13 @@ try {
   const dup = await fn(admin, 'admin', { action: 'duplicateCharacter', characterId: pc.$id, name: 'Copie' });
   check('duplicating a character copies its values', dup.ok && dup.copied?.character_values === 1);
 
+  // server settings (interface language): readable before sign-in, written by the admin only
+  const guestRead = await api(null, 'GET', `/tablesdb/${DB}/tables/app_settings/rows/global`);
+  check('server language readable without an account', [200, 404].includes(guestRead.status), String(guestRead.status));
+  const pw1 = await api(player, 'POST', `/tablesdb/${DB}/tables/app_settings/rows`, { rowId: 'global', data: { lang: 'fr' } });
+  const pw2 = await api(player, 'PATCH', `/tablesdb/${DB}/tables/app_settings/rows/global`, { data: { lang: 'fr' } });
+  check('a player cannot change the server language', pw1.status >= 400 && pw2.status >= 400, `${pw1.status}/${pw2.status}`);
+
   // online image search (server-side: Pixabay key and DuckDuckGo never reach the browser)
   check('image search needs a session', (await fn(null, 'image-search', { action: 'search', source: 'ddg', q: 'chat' })).ok === false);
   const lan = await fn(player, 'image-search', { action: 'fetch', url: 'http://192.168.1.1/a.jpg' });

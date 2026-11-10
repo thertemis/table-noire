@@ -65,7 +65,8 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 - **Online image search** in three tabs: Wikimedia Commons, Pixabay (one key per server) and DuckDuckGo.
 
 **Languages**
-- **English** and **French** interface: pick it on the sign-in screen (browser language by default). The default
+- **English** and **French** interface, chosen by the admin for the whole server (**Settings** on the campaigns
+  screen, or **Server settings** in the campaign settings): automatic (each browser’s language), French or English. The default
   sheet of a new campaign is created in the chosen language.
 
 **Comfort and robustness**
@@ -99,7 +100,7 @@ flowchart LR
     P["GitHub Pages<br/>(or Cloudflare Pages)"]
   end
   subgraph Appwrite server
-    T[("TablesDB<br/>23 tables")]
+    T[("TablesDB<br/>24 tables")]
     S[("Storage<br/>portraits, maps…")]
     F["Node 22 Functions<br/>admin · roll-dice · player-action<br/>apply-visibility · redeem-invite<br/>guard-signup · image-search"]
     R(("Realtime<br/>WebSocket"))

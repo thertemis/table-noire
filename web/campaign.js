@@ -46,7 +46,9 @@ settingsModal = function () {
   const box = $('#modalBox');
   box.innerHTML = box.innerHTML.replace('Nom de l’application', 'Nom de la campagne').replace('Campagne / lieu', 'Lieu / description')
     .replace('<h3>Paramètres de la table</h3>', `<h3>Paramètres de la campagne · ${esc(ME.camp?.name || '')}</h3>`);
+  if (ME.isAdmin) box.querySelector('.modal-acts')?.insertAdjacentHTML('afterbegin', `<button class="btn" data-act="serverSettings">${ic('layout')}Paramètres du serveur</button>`);
 };
+ACT.serverSettings = () => { serverModal(); return false; };
 ACT.setReset = () => {   // back to the look-and-play defaults; the campaign keeps its name and session
   Object.assign(SETTINGS, { accent: SET_DEF.accent, diceSeconds: SET_DEF.diceSeconds, defaultVis: SET_DEF.defaultVis, allowPlayerLayout: SET_DEF.allowPlayerLayout });
   applySettings(); settingsModal(); toast('Apparence et règles par défaut rétablies'); return false;

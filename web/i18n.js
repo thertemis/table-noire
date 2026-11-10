@@ -9,12 +9,22 @@
    tools/i18n-extract.mjs lists the texts missing from the dictionary (tools/release.mjs refuses to publish then). */
 
 const LANGS = { fr: 'Français', en: 'English' };
+// The language is a server setting chosen by the admin (table app_settings: auto / fr / en). The last known value is
+// kept on the device so the page starts in the right language; online.js checks the server at start-up.
+const browserLang = () => /^fr\b/i.test(navigator.language || '') ? 'fr' : 'en';
 const LANG = (() => {
-  try { const s = localStorage.getItem('tn-lang'); if (s in LANGS) return s; } catch (_) {}
-  return /^fr\b/i.test(navigator.language || '') ? 'fr' : 'en';
+  try { const s = localStorage.getItem('tn-lang-server'); if (s in LANGS) return s; } catch (_) {}
+  return browserLang();
 })();
 document.documentElement.lang = LANG;
-function setLang(l) { if (!(l in LANGS) || l === LANG) return; try { localStorage.setItem('tn-lang', l); } catch (_) {} location.reload(); }
+/** Apply the server's language setting ('auto', 'fr' or 'en'); returns true when the page reloads to switch. */
+function applyServerLang(v) {
+  try { localStorage.setItem('tn-lang-server', v); localStorage.removeItem('tn-lang'); } catch (_) {}
+  const want = v in LANGS ? v : browserLang();
+  if (want === LANG) return false;
+  location.reload();
+  return true;
+}
 
 const I18N = (() => {
   const dict = LANG === 'en' && typeof I18N_EN === 'object' ? I18N_EN : null;
@@ -107,9 +117,5 @@ const I18N = (() => {
 })();
 /** Translate a French text for display (identity in French). */
 const tr = I18N.t;
-/** Language buttons (login and campaign screens). */
-const langSwitchHtml = () => `<div class="seg lang-switch" data-noi18n role="group" aria-label="Language">${Object.entries(LANGS).map(([k, l]) =>
-  `<button type="button" data-lang="${k}" aria-pressed="${k === LANG}"><span class="dot"></span>${l}</button>`).join('')}</div>`;
-document.addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
 /** Locale for dates, numbers and sorting. */
 const LOCALE = LANG === 'fr' ? 'fr-FR' : 'en-GB';
