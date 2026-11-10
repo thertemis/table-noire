@@ -379,17 +379,24 @@ function dialSvg(v, max, col) {
     <circle cx="37" cy="37" r="20" fill="url(#knob)" stroke="#0e0d0b"/><text class="num" x="37" y="44" text-anchor="middle">${v}</text></svg>`;
 }
 function tStats() {
+  if (S.statEdit && !isMJ() && S.viewer === 'owner') {
+    return tile('stats', 'Statistiques', `<div class="edit-list">${C.stats.filter(s => canSee(s.vis)).map(s => `<div class="edit-row">
+      <span class="w-name" style="flex:1">${esc(s.name)}</span>
+      <input class="field w-num" type="number" min="0" max="${s.max}" data-bind="stat:${s.id}:value" value="${s.value}" aria-label="Valeur ${esc(s.name)}"><span class="hint">/ ${s.max}</span></div>`).join('')}
+      <div class="edit-row"><span class="grow"></span><button class="btn xs orange" data-act="statEdit">Terminé</button></div></div>`);
+  }
   if (S.statEdit && isMJ()) {
     return tile('stats', 'Statistiques', `<div class="edit-list">${C.stats.map(s => `<div class="edit-row">
       <input class="field w-name" data-bind="stat:${s.id}:name" value="${esc(s.name)}" aria-label="Nom">
       <input class="field w-abbr" data-bind="stat:${s.id}:abbr" value="${esc(s.abbr)}" aria-label="Abréviation" maxlength="4">
       <input class="field w-num" type="number" data-bind="stat:${s.id}:value" value="${s.value}" aria-label="Valeur">
       <input class="field w-num" type="number" data-bind="stat:${s.id}:max" value="${s.max}" aria-label="Maximum">
+      <input class="field" style="width:130px" data-bind="stat:${s.id}:roll" value="${esc(s.roll || '')}" placeholder="Jet (facultatif)" title="Formule du jet au clic, ex. 1d20+{mod} ou (2d6+AGI)*FOR. Vide : formule de la campagne." aria-label="Formule de jet" spellcheck="false">
       ${visBadge('stat', s.id, s.vis)}<button class="iconbtn" data-act="rmStat" data-id="${s.id}" aria-label="Supprimer ${esc(s.name)}">${ic('trash',13)}</button></div>`).join('')}
       <div class="edit-row"><button class="btn xs" data-act="addStat">${ic('plus',12)}Statistique</button><span class="grow"></span><button class="btn xs orange" data-act="statEdit">Terminé</button></div></div>`);
   }
   return tile('stats', 'Statistiques', `<div class="stats">${C.stats.filter(s => canSee(s.vis)).map(s => `<div class="dial well">${dialSvg(s.value, s.max, STATCOL[s.abbr] || 'var(--mustard)')}<div class="dial-name">${esc(s.name)}</div>${s.vis !== 'all' ? visBadge('stat', s.id, s.vis) : ''}</div>`).join('')}</div>`,
-    isMJ() ? `<button class="btn xs" data-act="statEdit">${ic('edit',12)}Éditer</button>` : '');
+    isMJ() || S.viewer === 'owner' ? `<button class="btn xs" data-act="statEdit">${ic('edit',12)}Éditer</button>` : '');
 }
 
 /* ---- anatomy plates (coordinates in each image's pixel space) ---- */
@@ -479,6 +486,12 @@ function tNotes() {
   return tile('notes', 'Carton', body, S.viewer !== 'other' && !S.notesEdit ? `<button class="btn xs" data-act="notesEdit">${ic('edit',12)}Éditer</button>` : '');
 }
 function tFlavor() {
+  if (S.flavorEdit && !isMJ() && S.viewer === 'owner') {
+    return tile('flavor', 'Informations', `<div class="edit-list">${C.flavor.filter(f => canSee(f.vis)).map(f => `<div class="edit-row">
+      <span style="width:140px" class="hint">${esc(f.label)}</span>
+      ${f.wide ? `<textarea class="field w-name" data-bind="flavor:${f.id}:value" rows="3" aria-label="${esc(f.label)}">${esc(f.value)}</textarea>` : `<input class="field w-name" data-bind="flavor:${f.id}:value" value="${esc(f.value)}" aria-label="${esc(f.label)}">`}</div>`).join('')}
+      <div class="edit-row"><span class="grow"></span><button class="btn xs orange" data-act="flavorEdit">Terminé</button></div></div>`);
+  }
   if (S.flavorEdit && isMJ()) {
     return tile('flavor', 'Informations', `<div class="edit-list">${C.flavor.map(f => `<div class="edit-row">
       <input class="field" style="width:140px" data-bind="flavor:${f.id}:label" value="${esc(f.label)}" aria-label="Libellé">
@@ -487,7 +500,7 @@ function tFlavor() {
       <div class="edit-row"><button class="btn xs" data-act="addFlavor">${ic('plus',12)}Champ court</button><button class="btn xs" data-act="addFlavorWide">${ic('plus',12)}Champ long</button><span class="grow"></span><button class="btn xs orange" data-act="flavorEdit">Terminé</button></div></div>`);
   }
   return tile('flavor', 'Informations', `<dl class="flavor">${C.flavor.filter(f => canSee(f.vis)).map(f => `<div class="fl ${f.wide?'wide':''} ${f.vis==='mj'?'locked':''}"><dt>${esc(f.label)} ${f.vis!=='all'?visBadge('flavor', f.id, f.vis):''}</dt><dd>${esc(f.value)}</dd></div>`).join('')}</dl>`,
-    isMJ() ? `<button class="btn xs" data-act="flavorEdit">${ic('edit',12)}Éditer</button>` : '');
+    isMJ() || S.viewer === 'owner' ? `<button class="btn xs" data-act="flavorEdit">${ic('edit',12)}Éditer</button>` : '');
 }
 function tCustom(id) {
   const t = S.custom[id];
@@ -510,7 +523,7 @@ const LIB = [['jauge','Jauge','hp_max'],['stat','Statistique','stat_x'],['texte'
 function renderFiche() {
   const visible = L().order.filter(id => S.custom[id] || canSee(S.tileVis[id] || 'all'));
   const R = { identity:tIdentity, gauges:tGauges, anatomy:tAnatomy, stats:tStats, notes:tNotes, journal:tJournal, flavor:tFlavor };
-  return `<div class="toolbar"><div><h2>Fiche · ${esc(flv('Prénom'))} ${esc(flv('Nom'))}</h2><div class="sub">${S.viewer==='other' ? 'Tu vois uniquement ce qu’Inès et le MJ ont rendu public.' : S.viewer==='owner' ? 'Ta fiche. Les éléments « Privé » ne sont visibles que par toi et le MJ.' : 'Vue MJ : tout est visible. Clique un badge de visibilité pour le changer. Les maximums des jauges se modifient directement.'}</div></div><span class="grow"></span>
+  return `<div class="toolbar"><div><h2>Fiche · ${esc(flv('Prénom'))} ${esc(flv('Nom'))}</h2><div class="sub">${S.viewer==='other' ? 'Lecture seule : tu vois ce que ce joueur et le MJ ont rendu visible à tous.' : S.viewer==='owner' ? 'Ta fiche. Les éléments « Privé » ne sont visibles que par toi et le MJ.' : 'Vue MJ : tout est visible. Clique un badge de visibilité pour le changer. Les maximums des jauges se modifient directement.'}</div></div><span class="grow"></span>
     ${S.viewer !== 'other' ? `${S.viewer === 'owner' && S.pl && !S.layoutEdit ? '<button class="btn" data-act="resetLayout">Disposition du MJ</button>' : ''}<button class="btn ${S.layoutEdit?'on':''}" data-act="layoutEdit">${ic('layout')}${S.layoutEdit ? 'Terminer la disposition' : (isMJ() ? 'Modifier le modèle de fiche' : 'Réorganiser ma fiche')}</button>` : ''}</div>
     ${S.layoutEdit ? `<div class="library well"><span class="tile-title">${isMJ() ? 'Bibliothèque' : 'Widgets'}</span>${(isMJ() ? LIB : []).map(([t, l, b]) => `<span class="libchip" draggable="true" data-lib="${t}">${l} <code>{{${b}}}</code></span>`).join('')}${typeof fidLibChips === 'function' ? fidLibChips() : ''}<span class="hint">Glisse un champ sur la grille. Glisse une tuile pour la déplacer.</span></div>` : ''}
     <div class="bento" id="bento">${visible.map(id => S.custom[id] ? tCustom(id) : FIDS[id] ? tile(id, FIDS[id].title, FIDS[id].body(), '', { led:'#86985a', removable:true, cls:FIDS[id].compact ? 'compact' : '' }) : R[id]()).join('')}</div>
@@ -529,7 +542,7 @@ function cardHtml(def, own, lib) {
         <div class="c-foot"><span class="rar">${RARITY[def.rarity]}</span><span>${esc(def.value)}</span></div></div>
       <div class="face back"><h4>${esc(def.name)}</h4>
         <div class="meta"><span>Type</span><b>${esc(def.type)}</b><span>Valeur</span><b>${esc(def.value)}</b><span>Rareté</span><b>${RARITY[def.rarity]}</b></div>
-        <p style="margin:0;font-size:12px;color:#d3cbbb">${esc(def.desc)}</p>
+        <p style="margin:0;font-size:12px;color:#d3cbbb;white-space:pre-line">${esc(def.desc)}</p>
         ${isMJ() && def.mj ? `<div class="mjnote">${ic('lock',12)}<span>${esc(def.mj)}</span></div>` : ''}
         <div class="acts">
           ${own && owner ? `<button class="btn xs" data-act="toggleHide" data-kind="inv" data-id="${own.iid}">${ic(own.hidden?'eye':'eyeOff',12)}${own.hidden?'Montrer':'Cacher aux joueurs'}</button>` : ''}
@@ -733,6 +746,7 @@ function skillForm(def) {
     <label>Statistique associée<select class="field" name="stat">${C.stats.map(s => s.abbr).map(s => `<option ${s===d.stat?'selected':''}>${s}</option>`).join('')}</select></label>
     <label>Niveau (1 à 5)<input class="field" type="number" min="1" max="5" name="level" value="${d.level}"></label>
     <label class="full">Description<textarea class="field" name="desc" rows="3">${esc(d.desc)}</textarea></label>
+    <label class="full">Formule de jet (facultative)<input class="field" name="roll" value="${esc(d.roll || '')}" maxlength="128" placeholder="ex. 1d20+{mod}+{niv} ou 2d6+AGI" spellcheck="false"></label>
     <label class="full" style="color:var(--rust)">Note MJ (visible du MJ seul)<textarea class="field" name="mj" rows="2">${esc(d.mj)}</textarea></label>
     <div class="modal-acts full"><button type="button" class="btn" data-act="closeModal">Annuler</button><button class="btn orange" type="submit">Enregistrer</button></div></form>`);
 }

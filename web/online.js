@@ -12,7 +12,7 @@ const ME = { user: null, isAdmin: false, camp: null, role: null, chars: [], char
 const ONLINE = { unsub: null, holding: false, held: [] };
 
 /* ---------------------------------------------------------------- helpers */
-const BUILD = '2026-11-10.30';
+const BUILD = '2026-11-10.31';
 const loginEmail = id => (id.includes('@') ? id.trim() : `${id.trim().toLowerCase()}@players.tablenoire.invalid`);
 const appLink = (kind, token) => `${location.origin}${location.pathname}?${kind}=${token}`;
 async function call(functionId, body) {
@@ -241,7 +241,10 @@ renderHeader = function () {
   logClearBtn.hidden = !(ME.camp && ME.role === 'gm');
   if (!ME.camp) return;
   const lbl = $('.viewer .lbl'); if (lbl) { lbl.textContent = 'Personnage'; lbl.classList.add('online'); }
-  const opts = ME.role === 'gm' ? [[null, 'MJ'], ...ME.chars.filter(c => c.kind !== 'npc').map(c => [c.$id, c.name])] : ME.chars.filter(c => c.ownerId === ME.user.$id).map(c => [c.$id, c.name]);
+  // players: their own characters first, then the other players' characters (read only, public fields only)
+  const pcs = ME.chars.filter(c => c.kind !== 'npc');
+  const opts = ME.role === 'gm' ? [[null, 'MJ'], ...pcs.map(c => [c.$id, c.name])]
+    : [...pcs.filter(c => c.ownerId === ME.user.$id), ...pcs.filter(c => c.ownerId && c.ownerId !== ME.user.$id)].map(c => [c.$id, c.ownerId === ME.user.$id || c.name === ME.names[c.ownerId] ? c.name : `${c.name} · ${ME.names[c.ownerId] || 'joueur'}`]);
   $('#viewerSeg').innerHTML = opts.length ? opts.map(([id, n]) => `<button data-act="pickChar" data-id="${id || ''}" aria-pressed="${(ME.charId || null) === id}"><span class="dot"></span>${esc(n)}</button>`).join('')
     : `<button disabled><span class="dot"></span>Aucun personnage</button>`;
   $('#adminSlot').innerHTML = [
@@ -252,7 +255,14 @@ renderHeader = function () {
   ].join('');
 };
 Object.assign(ACT, {
-  pickChar: d => { ME.charId = d.id || null; },
+  pickChar: d => {
+    ME.charId = d.id || null;
+    if (ME.role !== 'gm') {   // a player looks at another player's character: read only
+      const ch = ME.chars.find(c => c.$id === ME.charId);
+      S.viewer = ch && ch.ownerId === ME.user.$id ? 'owner' : 'other';
+      S.layoutEdit = S.statEdit = S.flavorEdit = S.notesEdit = false;
+    }
+  },
   membersMgr: () => { membersModal(); return false; },
   campaignsMgr: () => { campaignsModal(); return false; },
   usersMgr: () => { usersModal(); return false; },
@@ -385,7 +395,7 @@ const toLog = r => {
   let text = r.formula, d = {}; try { d = JSON.parse(r.detail || '{}'); text = d.text || text; } catch (_) {}
   const t = new Date(r.$createdAt || Date.now());
   const head = `${d.secret ? 'Secret · ' : ''}${d.label ? d.label + ' · ' : ''}`;
-  return { id: r.$id, who: r.characterName || r.username || '?', color: colorFor(r.characterId || r.userId), detail: `${head}${r.formula}  →  ${text}`, total: r.total, time: t.toTimeString().slice(0, 5), ts: t.getTime(), secret: !!d.secret };
+  return { id: r.$id, who: r.username || r.characterName || '?', color: colorFor(r.userId), detail: `${head}${r.formula}  →  ${text}`, total: r.total, time: t.toTimeString().slice(0, 5), ts: t.getTime(), secret: !!d.secret };
 };
 function pushLog(entry, fresh = true) {
   if (LOG.some(l => l.id === entry.id)) return;
@@ -434,23 +444,24 @@ logClearBtn.addEventListener('click', async () => {
 
 roll = async function onlineRoll() {
   if (rolling || !ME.camp) return;
-  let ast;
-  try { ast = parse(dF.value); } catch (err) { $('#dErr').textContent = err.message; return; }
+  let ast, formula;
+  const typed = dF.value.trim();
+  try { formula = typeof withAliases === 'function' ? withAliases(typed) : typed; ast = parse(formula); } catch (err) { $('#dErr').textContent = err.message; return; }
   const faces = diceList(ast);
   if (faces.length > 200) { $('#dErr').textContent = 'Maximum 200 dés par lancer.'; return; }
   rolling = true; ONLINE.holding = true; ONLINE.held = []; $('#dErr').textContent = '';
-  const btn = $('#dRoll'), sub = $('#dSub'), formula = dF.value.trim();
+  const btn = $('#dRoll'), sub = $('#dSub');
   // a roll started from the sheet carries its label and character; the dock toggle makes it secret
   const sheetRoll = ONLINE.next || {}; ONLINE.next = null;
   const rollChar = sheetRoll.charId || ME.charId, secret = !!$('#dSecret')?.checked;
   const ch = ME.chars.find(c => c.$id === rollChar);
   btn.disabled = true; btn.textContent = 'Les dés roulent…';
-  $('#dWho').textContent = ch ? ch.name : (ME.role === 'gm' ? 'MJ' : ME.user.name);
-  dTotal.classList.remove('idle', 'done'); sub.textContent = formula;
+  $('#dWho').textContent = ME.user.name;
+  dTotal.classList.remove('idle', 'done'); sub.textContent = typed === formula ? formula : `${typed} = ${formula}`;
   const tray = $('#dTray'); tray.classList.remove('shake'); void tray.offsetWidth; tray.classList.add('shake');
 
   let result = null, finals = null, failed = null;
-  call('roll-dice', { campaignId: ME.camp.$id, characterId: rollChar, formula, label: sheetRoll.label || '', secret })
+  call('roll-dice', { campaignId: ME.camp.$id, characterId: rollChar, formula, label: sheetRoll.label || (typed !== formula ? typed : ''), secret })
     .then(r => { result = r; finals = r.rolls.flatMap(g => g.values); if (finals.length !== faces.length) failed = 'Désaccord client/serveur sur les dés.'; })
     .catch(e => { failed = errMsg(e); });
 
@@ -475,7 +486,7 @@ roll = async function onlineRoll() {
     if (!finals || el < DURATION || !locked.every(Boolean)) return requestAnimationFrame(frame);
     renderTray(faces, finals, faces.map(() => true));
     setFlaps(dTotal, result.total); dTotal.classList.add('done'); sub.textContent = result.text; sfx.done();
-    if (!ONLINE.held.length) pushLog({ id: result.id, who: result.characterName, color: colorFor(ME.charId || ME.user.$id), detail: `${formula}  →  ${result.text}`, total: result.total, time: new Date().toTimeString().slice(0, 5) });
+    if (!ONLINE.held.length) pushLog({ id: result.id, who: ME.user.name, color: colorFor(ME.user.$id), detail: `${formula}  →  ${result.text}`, total: result.total, time: new Date().toTimeString().slice(0, 5) });
     $('#fabLast').textContent = result.total;
     finish();
   }

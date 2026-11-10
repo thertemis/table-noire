@@ -48,17 +48,19 @@ leaveCampaign = async function () { if (ME.camp && TPLS.last !== null) await sav
 const _renderFicheTpl = renderFiche;
 renderFiche = function () {
   const html = _renderFicheTpl();
-  if (!ME.camp || !isGmHere() || S.layoutEdit) return html;
+  if (!ME.camp || S.layoutEdit || !(isGmHere() || S.viewer === 'owner')) return html;   // players: their own layout
   return html.replace(/<button class="btn[^"]*" data-act="layoutEdit"/, m => `<button class="btn" data-act="tplOpen">${ic('book')}Modèles</button>` + m);
 };
 ACT.tplOpen = () => { tplModal(); return false; };
 
+// what a player saves and applies is the layout of their own sheet; the campaign fields stay the GM's
+const playerLayoutSnap = () => { const l = S.pl || S.tpl; return JSON.stringify({ order: l.order, spans: l.spans, custom: S.custom, tileVis: S.tileVis || {}, rows: S.rows || {} }); };
 function tplModal() {
   openModal(`<h3>Modèles de fiche</h3>
-    <p class="hint" style="margin:0">Un modèle contient les champs de la fiche (statistiques, jauges, compteurs, informations) et sa disposition. Les modèles sont partagés avec tous les utilisateurs.</p>
+    <p class="hint" style="margin:0">${isGmHere() ? 'Un modèle contient les champs de la fiche (statistiques, jauges, compteurs, informations) et sa disposition. Les modèles sont partagés avec tous les utilisateurs.' : 'Tu peux enregistrer la disposition de ta fiche comme modèle, ou reprendre celle d’un modèle pour ta fiche. Les champs restent ceux choisis par le MJ.'}</p>
     <form class="form" id="tplSave"><label class="full">Nom du modèle<input class="field" name="name" maxlength="128" placeholder="ex. Enquête contemporaine" required></label>
       <label class="full">Description<input class="field" name="description" maxlength="1000" placeholder="Pour quel jeu, quel ton…"></label>
-      <div class="modal-acts full"><button class="btn orange" type="submit">${ic('plus')}Enregistrer la fiche actuelle comme modèle</button></div></form>
+      <div class="modal-acts full"><button class="btn orange" type="submit">${ic('plus')}${isGmHere() ? 'Enregistrer la fiche actuelle comme modèle' : 'Enregistrer ma disposition comme modèle'}</button></div></form>
     <div id="tplList" class="tpl-list"><p class="hint">Chargement…</p></div>
     <div class="modal-acts"><button class="btn" data-act="closeModal">Fermer</button></div>`);
   loadTemplates();
@@ -74,8 +76,8 @@ async function loadTemplates() {
     return `<article class="tpl well"><div class="tpl-head"><b>${esc(t.name)}</b><small>par ${esc(t.ownerName || '?')} · ${f.length} champ${f.length > 1 ? 's' : ''} · ${fmtDate(t.$createdAt)}</small></div>
       ${t.description ? `<p>${esc(t.description)}</p>` : ''}
       <div class="tpl-chips">${f.slice(0, 18).map(x => `<span class="chip" title="${esc(KIND[x.kind] || x.kind)}">${esc(x.label)}</span>`).join('')}${f.length > 18 ? `<span class="chip">+${f.length - 18}</span>` : ''}</div>
-      <div class="edit-row"><button class="btn xs orange" data-act="tplApply" data-id="${t.$id}" data-mode="replace">Appliquer</button>
-        <button class="btn xs" data-act="tplApply" data-id="${t.$id}" data-mode="merge">Ajouter ses champs</button><span class="grow"></span>
+      <div class="edit-row">${isGmHere() ? `<button class="btn xs orange" data-act="tplApply" data-id="${t.$id}" data-mode="replace">Appliquer</button>
+        <button class="btn xs" data-act="tplApply" data-id="${t.$id}" data-mode="merge">Ajouter ses champs</button>` : `<button class="btn xs orange" data-act="tplMine" data-id="${t.$id}" ${t.layout ? '' : 'disabled'}>Utiliser sa disposition</button>`}<span class="grow"></span>
         ${mine ? `<button class="iconbtn" data-act="tplDel" data-id="${t.$id}" aria-label="Supprimer le modèle">${ic('trash', 12)}</button>` : ''}</div></article>`;
   }).join('') : '<p class="hint">Aucun modèle pour l’instant.</p>';
 }
@@ -91,7 +93,7 @@ document.addEventListener('submit', async e => {
       .map(d => ({ key: d.key, label: d.label, kind: d.kind, config: d.config || '{}', defaultVisibility: d.defaultVisibility || 'all', sort: d.sort || 0 }));
     if (!fields.length) throw new Error('La fiche de cette campagne n’a encore aucun champ.');
     await AW.db.createRow(T('sheet_templates', { rowId: Appwrite.ID.unique(), data: { name: fd.name.trim().slice(0, 128), description: (fd.description || '').trim().slice(0, 1000),
-      ownerId: ME.user.$id, ownerName: (ME.user.name || '').slice(0, 64), fields: JSON.stringify(fields), layout: layoutSnap() } }));
+      ownerId: ME.user.$id, ownerName: (ME.user.name || '').slice(0, 64), fields: JSON.stringify(fields), layout: isGmHere() ? layoutSnap() : playerLayoutSnap() } }));
     toast(`Modèle « ${fd.name.trim()} » enregistré`);
     e.target.reset();
   } catch (err) { toast('Modèle non enregistré : ' + errMsg(err)); }
@@ -99,6 +101,14 @@ document.addEventListener('submit', async e => {
   loadTemplates();
 }, true);
 
+ACT.tplMine = d => {   // a player takes a template's layout for their own sheet (tiles the campaign does not have are left out)
+  const t = TPLS.list.find(x => x.$id === d.id); let l = null; try { l = JSON.parse(t?.layout || 'null'); } catch (_) {}
+  if (!l || !Array.isArray(l.order)) return false;
+  const known = new Set(S.tpl.order);
+  S.pl = { order: l.order.filter(id => known.has(id)), spans: { ...S.tpl.spans, ...(l.spans || {}) } };
+  closeModal(); render(); toast(`Disposition de « ${t.name} » appliquée à ta fiche`);
+  return false;
+};
 ACT.tplDel = d => {
   const t = TPLS.list.find(x => x.$id === d.id); if (!t) return false;
   if (!confirm(`Supprimer le modèle « ${t.name} » ? Il disparaîtra pour tous les utilisateurs.`)) return false;

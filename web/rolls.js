@@ -2,7 +2,8 @@
    - Click a statistic dial, or "Lancer" on an owned skill card: the dice roller rolls the campaign's formula
      and the shared log shows what it was for ("Crochetage · AGI").
    - Formulas are campaign settings (Jeu & joueurs): placeholders {val} (stat value), {mod} = floor((val - 10) / 2),
-     {niv} (skill level). Defaults: stat 1d20+{mod}, skill 1d20+{mod}+{niv}.
+     {niv} (skill level). Defaults: stat 1d20+{mod}, skill 1d20+{mod}+{niv}. A stat (GM stat editor) or a skill (its
+     form) may have its own formula. Stat abbreviations are aliases in any formula (withAliases).
    - "Secret" in the roller: the roll is only seen by the campaign's GMs and the roller (roll-dice secret). */
 
 SET_DEF.rollStat = '1d20+{mod}'; SET_DEF.rollSkill = '1d20+{mod}+{niv}';
@@ -25,7 +26,7 @@ settingsModal = function () {
   $('#modalBox .setpane .form')?.insertAdjacentHTML('beforeend', `
     <label>Formule d’un test de statistique<input class="field" data-set="rollStat" value="${esc(SETTINGS.rollStat)}" spellcheck="false"></label>
     <label>Formule d’un test de compétence<input class="field" data-set="rollSkill" value="${esc(SETTINGS.rollSkill)}" spellcheck="false"></label>
-    <p class="setnote full" style="grid-column:1/-1">{val} = valeur de la statistique, {mod} = (valeur − 10) ÷ 2 arrondi en dessous, {niv} = niveau de la compétence. Exemples : 1d20+{mod} · 1d100 · {val}d6 · 1d20+{mod}+{niv}.</p>`);
+    <p class="setnote full" style="grid-column:1/-1">{val} = valeur de la statistique, {mod} = (valeur − 10) ÷ 2 arrondi en dessous, {niv} = niveau de la compétence. Exemples : 1d20+{mod} · 1d100 · {val}d6 · 1d20+{mod}+{niv}. Les abréviations des statistiques servent d’alias dans toute formule : (2d6+AGI)*FOR.</p>`);
 };
 
 function rollFormula(tpl, vars) {
@@ -57,7 +58,7 @@ render = function () {
 document.addEventListener('click', e => {
   const d = e.target.closest && e.target.closest('.dial[data-roll-stat]'); if (!d) return;
   const s = C.stats.find(x => x.id === d.dataset.rollStat); if (!s) return;
-  sheetRoll(`${s.name}`, rollFormula(SETTINGS.rollStat, { val: s.value, mod: modOf(s.value) }));
+  sheetRoll(`${s.name}`, rollFormula(s.roll || SETTINGS.rollStat, { val: s.value, mod: modOf(s.value) }));
 });
 document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.dial[data-roll-stat]')) { e.preventDefault(); e.target.click(); } });
 
@@ -71,9 +72,22 @@ skillHtml = function (def, own, lib) {
 ACT.rollSkill = d => {
   const k = SKILLS.find(x => x.id === d.id); if (!k) return false;
   const st = C.stats.find(s => s.abbr === k.stat);
-  sheetRoll(`${k.name}${k.stat ? ' · ' + k.stat : ''}`, rollFormula(SETTINGS.rollSkill, { val: st ? st.value : 10, mod: st ? modOf(st.value) : 0, niv: k.level || 1 }));
+  sheetRoll(`${k.name}${k.stat ? ' · ' + k.stat : ''}`, rollFormula(k.roll || SETTINGS.rollSkill, { val: st ? st.value : 10, mod: st ? modOf(st.value) : 0, niv: k.level || 1 }));
   return false;
 };
+
+/* aliases: a stat's abbreviation (FOR, AGI… or its English display STR, WIL…) stands for its value on the open sheet,
+   e.g. (2d6+AGI)*FOR. Dice ("d6", "2d20", "d%") are not aliases. */
+function withAliases(src) {
+  const map = new Map();
+  for (const s of C.stats || []) for (const k of [s.abbr, tr(s.abbr), s.name, tr(s.name)]) if (k && /^[A-Za-zÀ-ÿ_]+$/.test(k)) map.set(k.toUpperCase(), +s.value || 0);
+  return String(src).replace(/(?<![A-Za-z0-9_À-ÿ])([A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ_0-9]*)/g, (m, id) => {
+    if (/^d(\d*|%)$/i.test(id)) return m;
+    const v = map.get(id.toUpperCase());
+    if (v === undefined) throw new Error(`Alias inconnu « ${id} » (${[...new Set((C.stats || []).map(s => tr(s.abbr)))].join(', ') || 'aucune statistique'})`);
+    return String(v);
+  });
+}
 
 /* the "Secret" toggle in the roller */
 $('#dFormula').closest('.frow').insertAdjacentHTML('afterend', `<label class="dsecret" title="Visible seulement par le MJ et toi"><input type="checkbox" id="dSecret"><span>Lancer secret</span></label>`);

@@ -1130,6 +1130,14 @@
           "required": false,
           "array": false,
           "default": null
+        },
+        {
+          "key": "formula",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
         }
       ],
       "indexes": [

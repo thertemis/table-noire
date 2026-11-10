@@ -1,7 +1,9 @@
 // player-action — the few changes a player may make to rows the GM owns.
 // Appwrite permissions cover whole rows, so players never get `update` on GM data; they go through here.
 // Body: { "action": "toggleHidden", "tableId": "item_instances" | "skill_instances", "rowId": "..." }
-//       { "action": "setValue", "rowId": "<character_values id>", "value": <number|string> }   (fields with config.player_editable)
+//       { "action": "setValue", "rowId": "<character_values id>", "value": <number|string> }
+//         (gauges/counters with config.player_editable; on their own character, also stats, information fields and the
+//          card, unless the value is GM-only or the field has config.gm_locked)
 import { Client, TablesDB, Query, ID, Permission, Role } from 'node-appwrite';
 import { DATABASE_ID, PUBLIC_ENDPOINT } from './config.js';
 import { campaignSlots } from './slots.js';
@@ -52,8 +54,12 @@ export default async ({ req, res }) => {
     if (!row || !(await ownsCharacter(row.characterId))) return deny(res, 'Cette valeur ne t’appartient pas.');
     const field = await db.getRow({ databaseId: DATABASE_ID, tableId: 'field_defs', rowId: row.fieldId }).catch(() => null);
     let cfg = {}; try { cfg = JSON.parse(field?.config || '{}'); } catch { /* keep empty */ }
-    if (!cfg.player_editable) return deny(res, 'Seul le MJ peut modifier ce champ.');
+    const ownerKinds = ['stat', 'text', 'longtext', 'card'];
+    const ownerEdit = ownerKinds.includes(field?.kind) && row.visibility !== 'gm' && !cfg.gm_locked;
+    if (!cfg.player_editable && !ownerEdit) return deny(res, 'Seul le MJ peut modifier ce champ.');
     let value = b.value;
+    if (field?.kind !== 'stat' && ownerKinds.includes(field?.kind)) value = String(value ?? '').slice(0, 5000);
+    else if (field?.kind === 'stat') { value = Number(value); if (!Number.isFinite(value)) return deny(res, 'Valeur numérique attendue.', 400); value = Math.max(0, Math.round(value)); }
     if (typeof cfg.min === 'number' || typeof cfg.max === 'number') {
       value = Number(value); if (!Number.isFinite(value)) return deny(res, 'Valeur numérique attendue.', 400);
       if (typeof cfg.min === 'number') value = Math.max(cfg.min, value);

@@ -39,7 +39,8 @@ async function loadInventory(charId, quiet = false) {
     ITEMS.splice(0, ITEMS.length, ...defs.map(r => ({ id: r.$id, name: r.name, type: r.type || '', rarity: r.rarity || 'common',
       value: r.valueLabel || '', art: r.art || 'photo', img: r.artFileId ? artUrl(r.artFileId) : '', fileId: r.artFileId || '', slot: r.slot || '',
       desc: r.description || '', mj: note('item_def', r.$id) })).sort(byName));
-    SKILLS.splice(0, SKILLS.length, ...sdefs.map(r => ({ id: r.$id, name: r.name, stat: statAbbr(r.statFieldId), level: r.defaultLevel || 1,
+    if (sdefs.length) IV.skillFormula = 'formula' in sdefs[0];   // the column was added later: older servers do not have it
+    SKILLS.splice(0, SKILLS.length, ...sdefs.map(r => ({ id: r.$id, name: r.name, stat: statAbbr(r.statFieldId), level: r.defaultLevel || 1, roll: r.formula || '',
       desc: r.description || '', mj: note('skill_def', r.$id) })).sort(byName));
     const own = r => ({ iid: r.$id, def: r.itemDefId || r.skillDefId, hidden: !!r.hiddenFromPlayers, vis: visFromDb(r.visibility),
       ...(r.itemDefId ? { qty: r.qty || 1, slot: r.equippedSlot || '' } : {}) });
@@ -148,7 +149,7 @@ async function pushInvGm(prev) {
     artFileId: x.img ? (x.fileId || '') : '', slot: String(x.slot || '').slice(0, 64) }), 'item_instances', 'itemDefId');
   for (const x of ITEMS) if (!x.img) x.fileId = '';
   await syncDefs('skill_defs', 'skill_def', SKILLS, prev.SKILLS, IV.sdefs, x => ({ name: String(x.name || 'Compétence').slice(0, 128),
-    statFieldId: statField(x.stat), defaultLevel: Math.max(1, Math.min(5, +x.level || 1)), description: x.desc || '' }), 'skill_instances', 'skillDefId');
+    statFieldId: statField(x.stat), defaultLevel: Math.max(1, Math.min(5, +x.level || 1)), description: x.desc || '', ...(IV.skillFormula ? { formula: String(x.roll || '').slice(0, 128) } : {}) }), 'skill_instances', 'skillDefId');
   await syncOwned('item_instances', INV, IV.inst, 'itemDefId', () => ({}), o => ({ qty: Math.max(1, Math.round(+o.qty || 1)) }));
   await syncOwned('skill_instances', SKOWN, IV.sinst, 'skillDefId', o => ({ level: Math.max(1, Math.min(5, +(SKILLS.find(s => s.id === o.def) || {}).level || 1)) }));
 }

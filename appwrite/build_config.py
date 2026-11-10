@@ -92,7 +92,7 @@ TABLES = [
      [CAMP(), vc('itemDefId', 36, True), vc('characterId', 36, True), it('qty', 0, None, 1), VIS(), bl('hiddenFromPlayers'), vc('equippedSlot', 64)],
      [ix('k_char', ['characterId']), ix('k_campaign', ['campaignId'])]),
     ('skill_defs', 'Catalogue de compétences', True, CAMPAIGN,
-     [CAMP(), vc('name', 128, True), vc('statFieldId', 36), it('defaultLevel', 1, 5, 1), tx('description')], [ix('k_campaign', ['campaignId'])]),
+     [CAMP(), vc('name', 128, True), vc('statFieldId', 36), it('defaultLevel', 1, 5, 1), tx('description'), vc('formula', 128)], [ix('k_campaign', ['campaignId'])]),
     ('skill_instances', 'Compétences possédées', True, CAMPAIGN,
      [CAMP(), vc('skillDefId', 36, True), vc('characterId', 36, True), it('level', 1, 5, 1), VIS(), bl('hiddenFromPlayers')],
      [ix('k_char', ['characterId']), ix('k_campaign', ['campaignId'])]),

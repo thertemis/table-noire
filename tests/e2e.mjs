@@ -69,6 +69,22 @@ try {
   check('change history records the player edit', hist.some(h => h.label === 'Santé' && h.after === '17'));
   check('player cannot read the history', (await list(player, 'change_log', q('equal', 'characterId', [pc.$id]))).length === 0);
 
+  // the player edits their own stats and information fields, not GM-only values nor locked fields
+  const stDef = await row(admin, 'field_defs', { campaignId: camp, key: 'stat_for', label: 'Force', kind: 'stat', config: JSON.stringify({ abbr: 'FOR', max: 20 }), defaultVisibility: 'all', sort: 2 });
+  const txDef = await row(admin, 'field_defs', { campaignId: camp, key: 'f_trade', label: 'Métier', kind: 'text', config: '{}', defaultVisibility: 'all', sort: 3 });
+  const lkDef = await row(admin, 'field_defs', { campaignId: camp, key: 'f_rank', label: 'Rang', kind: 'text', config: JSON.stringify({ gm_locked: true }), defaultVisibility: 'all', sort: 4 });
+  const stVal = await row(admin, 'character_values', { campaignId: camp, characterId: pc.$id, fieldId: stDef.$id, value: JSON.stringify({ value: 10, max: 20 }), visibility: 'all' });
+  const txVal = await row(admin, 'character_values', { campaignId: camp, characterId: pc.$id, fieldId: txDef.$id, value: '""', visibility: 'all' });
+  const gmVal = await row(admin, 'character_values', { campaignId: camp, characterId: pc.$id, fieldId: txDef.$id, value: '"secret"', visibility: 'gm' });
+  const lkVal = await row(admin, 'character_values', { campaignId: camp, characterId: pc.$id, fieldId: lkDef.$id, value: '"recrue"', visibility: 'all' });
+  await new Promise(r => setTimeout(r, 2500));
+  const st = await fn(player, 'player-action', { action: 'setValue', rowId: stVal.$id, value: 99 });
+  const tx = await fn(player, 'player-action', { action: 'setValue', rowId: txVal.$id, value: 'Archiviste\nà mi-temps' });
+  check('player edits their own stat (clamped to its max)', st.ok && st.value === 20, JSON.stringify(st));
+  check('player edits their own information field', tx.ok && tx.value === 'Archiviste\nà mi-temps', JSON.stringify(tx));
+  check('player cannot edit a GM-only value', (await fn(player, 'player-action', { action: 'setValue', rowId: gmVal.$id, value: 'x' })).ok === false);
+  check('player cannot edit a field locked by the GM', (await fn(player, 'player-action', { action: 'setValue', rowId: lkVal.$id, value: 'x' })).ok === false);
+
   // dice
   const r1 = await fn(player, 'roll-dice', { campaignId: camp, characterId: pc.$id, formula: '2d6+1', label: 'Test' });
   check('roll-dice rolls with a label', r1.ok && r1.total >= 3 && r1.total <= 13 && r1.label === 'Test');
@@ -161,7 +177,8 @@ try {
 
   // character copy
   const dup = await fn(admin, 'admin', { action: 'duplicateCharacter', characterId: pc.$id, name: 'Copie' });
-  check('duplicating a character copies its values', dup.ok && dup.copied?.character_values === 1);
+  const pcVals = (await list(admin, 'character_values', q('equal', 'characterId', [pc.$id]))).length;
+  check('duplicating a character copies its values', dup.ok && dup.copied?.character_values === pcVals, `${dup.copied?.character_values}/${pcVals}`);
 
   // server settings (interface language): readable before sign-in, written by the admin only
   const guestRead = await api(null, 'GET', `/tablesdb/${DB}/tables/app_settings/rows/global`);
