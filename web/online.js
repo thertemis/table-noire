@@ -12,7 +12,7 @@ const ME = { user: null, isAdmin: false, camp: null, role: null, chars: [], char
 const ONLINE = { unsub: null, holding: false, held: [] };
 
 /* ---------------------------------------------------------------- helpers */
-const BUILD = '2026-11-10.26';
+const BUILD = '2026-11-10.27';
 const loginEmail = id => (id.includes('@') ? id.trim() : `${id.trim().toLowerCase()}@players.tablenoire.invalid`);
 const appLink = (kind, token) => `${location.origin}${location.pathname}?${kind}=${token}`;
 async function call(functionId, body) {
@@ -26,7 +26,7 @@ async function rows(tableId, queries = []) {
   return (await AW.db.listRows({ databaseId: TN.db, tableId, queries: [...queries, AW.Q.limit(500)] })).rows;
 }
 const errMsg = e => (e && (e.message || e.type)) || String(e);
-const fmtDate = s => (s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
+const fmtDate = s => (s ? new Date(s).toLocaleString(LOCALE, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
 const COLORS = ['#4f8d89', '#8d6b9a', '#d6a23c', '#86985a', '#5280ad', '#c4523a', '#e7dcc4'];
 const colorFor = id => COLORS[[...String(id)].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
 function copy(text, el) {
@@ -83,7 +83,7 @@ document.body.appendChild(gate);
 const brandHtml = `<div class="gate-brand"><span class="brand-mark"></span><b>TABLE NOIRE</b></div>`;
 function gateScreen(html, wide = false) {
   gate.hidden = false; document.body.classList.add('gated');
-  gate.innerHTML = `<div class="gate-box ${wide ? 'wide' : ''}">${brandHtml}${html}</div>`;
+  gate.innerHTML = `<div class="gate-box ${wide ? 'wide' : ''}">${brandHtml}${html}${langSwitchHtml()}</div>`;
   const f = gate.querySelector('.field'); if (f) f.focus();
 }
 const gateErr = m => { const e = gate.querySelector('.gate-err'); if (e) e.textContent = m || ''; };

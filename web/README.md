@@ -25,6 +25,8 @@ chargé est donc la couche la plus externe. Les modules communiquent aussi par l
 | # | Fichier | Rôle | Enveloppe / ajoute |
 |---|---|---|---|
 | 0 | `config.js` | serveur Appwrite (généré par `tools/configure.mjs` depuis `tn.config.json`) | — |
+| 0 | `i18n-en.js` | dictionnaire anglais : texte français affiché → anglais (`{0}` pour les valeurs) | — |
+| 0 | `i18n.js` | langue (FR/EN), traduction de la page (MutationObserver), `tr()`, `LOCALE` | `confirm`, `alert`, `prompt` |
 | 1 | `app.js` | maquette : état, rendu, actions, dés | — |
 | 2 | `fidgets.js` | widgets de la fiche, grille bento (`packBento`) | tuiles |
 | 3 | `portrait.js` | portraits générés / importés | |

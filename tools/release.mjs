@@ -17,7 +17,7 @@ const fail = msg => { console.error('✗ ' + msg); process.exit(1); };
 const ok = msg => console.log('✓ ' + msg);
 
 /* ---------------------------------------------------------------- checks */
-try { execSync('node tools/configure.mjs --check', { cwd: ROOT, stdio: 'inherit' }); } catch { process.exit(1); }
+try { execSync('node tools/configure.mjs --check', { cwd: ROOT, stdio: 'inherit' }); execSync('node tools/i18n-extract.mjs --check', { cwd: ROOT, stdio: 'inherit' }); } catch { process.exit(1); }
 const index = readFileSync(WEB + 'index.html', 'utf8'), sw = readFileSync(WEB + 'sw.js', 'utf8'), online = readFileSync(WEB + 'online.js', 'utf8');
 const local = [...index.matchAll(/<script src="([a-z0-9-]+\.js)\?v=([^"]+)"/g)].map(m => ({ file: m[1], v: m[2] }));
 const build = /const BUILD = '([^']+)'/.exec(online)?.[1];

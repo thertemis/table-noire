@@ -19,7 +19,8 @@ const T = (tableId, extra = {}) => ({ databaseId: TN.db, tableId, ...extra });
 /* ---------------------------------------------------------------- default template (first GM visit) */
 function defaultTemplate() {
   let i = 0;
-  const d = (key, label, kind, config, vis = 'all') => ({ key, label, kind, config: JSON.stringify(config), defaultVisibility: vis, sort: (i += 10) });
+  // labels in the interface language (they become campaign data); stat codes stay FOR/AGI… (display translates them)
+  const d = (key, label, kind, config, vis = 'all') => ({ key, label: tr(label), kind, config: JSON.stringify(config), defaultVisibility: vis, sort: (i += 10) });
   return [
     ...[['for', 'Force', 'FOR'], ['agi', 'Agilité', 'AGI'], ['int', 'Intellect', 'INT'], ['per', 'Perception', 'PER'], ['vol', 'Volonté', 'VOL'], ['cha', 'Charisme', 'CHA']]
       .map(([k, l, a]) => d('stat_' + k, l, 'stat', { abbr: a, max: 20, default: 10 })),
