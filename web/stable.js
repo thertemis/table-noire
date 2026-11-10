@@ -22,14 +22,14 @@ render = function () {
   const MODULES = { 'i18n.js': 'applyServerLang', 'app.js': 'renderFiche', 'fidgets.js': 'packBento', 'portrait.js': 'portraitHtml', 'settings.js': 'applySettings', 'online.js': 'enterCampaign',
     'security.js': 'cleanPortrait', 'sheet.js': 'loadSheet', 'inventory.js': 'loadInventory', 'world.js': 'loadWorld', 'equipment.js': 'renderEquipment',
     'templates.js': 'applyLayout', 'campaign.js': 'subscribeCampaign', 'rolls.js': 'sheetRoll', 'initiative.js': 'renderIniBar', 'reveal.js': 'showReveal',
-    'fog.js': 'placeFog', 'gmtools.js': 'renderSessions', 'backup.js': 'exportCampaign', 'comfort.js': 'retryPending', 'library.js': 'libExport', 'notebook.js': 'renderNotebook', 'npc.js': 'renderNpcLibrary', 'lore.js': 'loreOverview', 'polls.js': 'pollsModal', 'images.js': 'openCropper' };
+    'fog.js': 'placeFog', 'gmtools.js': 'renderSessions', 'backup.js': 'exportCampaign', 'comfort.js': 'retryPending', 'library.js': 'libExport', 'notebook.js': 'renderNotebook', 'npc.js': 'renderNpcLibrary', 'lore.js': 'loreOverview', 'polls.js': 'pollsModal', 'identity.js': 'dispName', 'images.js': 'openCropper' };
   // typeof on each binding: works for function declarations and for the const of search.js (SRCH)
   const has = { applyServerLang: typeof applyServerLang, renderFiche: typeof renderFiche, packBento: typeof packBento, portraitHtml: typeof portraitHtml, applySettings: typeof applySettings,
     enterCampaign: typeof enterCampaign, cleanPortrait: typeof cleanPortrait, loadSheet: typeof loadSheet, loadInventory: typeof loadInventory,
     loadWorld: typeof loadWorld, renderEquipment: typeof renderEquipment, applyLayout: typeof applyLayout, subscribeCampaign: typeof subscribeCampaign,
     sheetRoll: typeof sheetRoll, renderIniBar: typeof renderIniBar, showReveal: typeof showReveal, placeFog: typeof placeFog, logChange: typeof logChange,
     exportCampaign: typeof exportCampaign, retryPending: typeof retryPending, renderSessions: typeof renderSessions, libExport: typeof libExport,
-    renderNotebook: typeof renderNotebook, renderNpcLibrary: typeof renderNpcLibrary, loreOverview: typeof loreOverview, pollsModal: typeof pollsModal, openCropper: typeof openCropper, SRCH: typeof SRCH };
+    renderNotebook: typeof renderNotebook, renderNpcLibrary: typeof renderNpcLibrary, loreOverview: typeof loreOverview, pollsModal: typeof pollsModal, dispName: typeof dispName, openCropper: typeof openCropper, SRCH: typeof SRCH };
   const missing = Object.entries(MODULES).filter(([, name]) => has[name] !== 'function').map(([f]) => f);
   if (has.SRCH !== 'object') missing.push('search.js');
   if (missing.length) {

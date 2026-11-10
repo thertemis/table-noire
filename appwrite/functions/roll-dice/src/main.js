@@ -82,12 +82,13 @@ export default async ({ req, res }) => {
   if (!roles.length && !isAdmin) return res.json({ ok: false, message: 'Tu ne fais pas partie de cette campagne.' }, 403);
   const isGm = isAdmin || roles.includes('gm');
 
-  let characterId = null, characterName = isGm ? 'MJ' : user.name;
+  // who rolls: a character (its display name), or for the GM "MJ" or a name of their choice ("as")
+  let characterId = null, characterName = isGm ? (String(b.as || '').replace(/\s+/g, ' ').trim().slice(0, 64) || 'MJ') : user.name;
   if (b.characterId) {
     const ch = await db.getRow({ databaseId: DATABASE_ID, tableId: 'characters', rowId: String(b.characterId) }).catch(() => null);
     if (!ch || ch.campaignId !== campaignId) return res.json({ ok: false, message: 'Personnage introuvable.' }, 404);
     if (ch.ownerId !== userId && !isGm) return res.json({ ok: false, message: 'Ce personnage n’est pas le tien.' }, 403);
-    characterId = ch.$id; characterName = ch.name;
+    characterId = ch.$id; characterName = ch.displayName || ch.name;
   }
 
   const row = await db.createRow({

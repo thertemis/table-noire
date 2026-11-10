@@ -489,6 +489,21 @@
           "required": false,
           "array": false,
           "default": false
+        },
+        {
+          "key": "displayName",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "useAlias",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
         }
       ],
       "indexes": [

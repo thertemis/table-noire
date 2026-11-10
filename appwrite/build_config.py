@@ -70,7 +70,7 @@ TABLES = [
     # Campaign-scoped
     ('characters', 'Personnages', True, CAMPAIGN,
      [CAMP(), vc('ownerId', 36), vc('name', 128, True), en('kind', ['pc', 'npc'], 'pc'), tx('portrait'), tx('layout'), bl('archived'),
-      vc('templateId', 36), bl('inScene')],   # NPC copies point to their model; NPCs are visible to players only in the scene
+      vc('templateId', 36), bl('inScene'), vc('displayName', 128), bl('useAlias')],   # NPC copies point to their model; NPCs are visible to players only in the scene
      [ix('k_campaign', ['campaignId']), ix('k_owner', ['ownerId'])]),
     ('player_prefs', 'Préférences joueur', True, CAMPAIGN,
      [CAMP(), vc('userId', 36, True), vc('characterId', 36), tx('layout'), tx('widgetPrefs'), tx('journal')],

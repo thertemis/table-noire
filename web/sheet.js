@@ -28,6 +28,7 @@ function defaultTemplate() {
     d('mind', 'Santé mentale', 'gauge', { color: '#4f8d89', hi: '#74b1ac', max: 15, step: 1, min: 0, player_editable: true }, 'owner'),
     d('money', 'Argent', 'counter', { unit: '€', step: 10, min: 0, player_editable: true }, 'owner'),
     ...['Prénom', 'Nom', 'Âge', 'Taille', 'Poids', 'Origine', 'Métier'].map((l, n) => d('f_' + n, l, 'text', {})),
+    d('f_alias', 'Alias', 'text', {}),
     d('f_secret', 'Secret', 'text', {}, 'gm'),
     d('f_bio', 'Biographie', 'longtext', {}),
     d('notes', 'Infos importantes', 'card', {}),

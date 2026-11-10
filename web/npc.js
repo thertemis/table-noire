@@ -11,7 +11,7 @@ const isNpcModel = c => c.kind === 'npc' && !c.templateId;
 const copiesOf = id => ME.chars.filter(c => c.templateId === id);
 function thumb(ch, size = 40) {
   const p = cleanPortrait((() => { try { return JSON.parse(ch?.portrait || 'null'); } catch (_) { return null; } })());
-  const inner = !p ? `<span class="th-ini">${esc((ch?.name || '?')[0])}</span>` : p.type === 'img' ? `<img src="${esc(p.src)}" alt="">` : prender(p.style, { ...(typeof PDEF !== 'undefined' ? PDEF : {}), ...p.p });
+  const inner = !p ? `<span class="th-ini">${esc((ch?.displayName || ch?.name || '?')[0].toUpperCase())}</span>` : p.type === 'img' ? `<img src="${esc(p.src)}" alt="">` : prender(p.style, { ...(typeof PDEF !== 'undefined' ? PDEF : {}), ...p.p });
   return `<span class="th" style="--th:${size}px">${inner}</span>`;
 }
 
@@ -24,8 +24,8 @@ renderIniBar = function () {
   iniBar.hidden = false;
   iniBar.innerHTML = `${s.active ? `<span class="ini-round">Round <b>${s.round}</b></span>` : `<span class="ini-round">Scène</span>`}
     <ol class="ini-list scene-list">${s.list.map((e, i) => { const ch = e.charId && ME.chars.find(c => c.$id === e.charId);
-      return `<li class="${s.active && i === s.turn ? 'cur' : ''} ${e.charId && mine.has(e.charId) ? 'mine' : ''} ${ch && ch.kind === 'npc' ? 'npc' : ''}" data-idx="${i}" ${gm ? 'draggable="true"' : ''} title="${esc(e.name)}">
-        ${thumb(ch || { name: e.name })}<span class="sc-name">${esc(e.name)}</span>${e.init !== null && e.init !== undefined ? `<span class="ini-n">${esc(String(e.init))}</span>` : ''}</li>`; }).join('')
+      return `<li class="${s.active && i === s.turn ? 'cur' : ''} ${e.charId && mine.has(e.charId) ? 'mine' : ''} ${ch && ch.kind === 'npc' ? 'npc' : ''}" data-idx="${i}" ${gm ? 'draggable="true"' : ''} title="${esc(ch ? dispName(ch) : e.name)}">
+        ${thumb(ch || { name: e.name })}<span class="sc-name">${esc(ch ? dispName(ch) : e.name)}</span>${e.init !== null && e.init !== undefined ? `<span class="ini-n">${esc(String(e.init))}</span>` : ''}</li>`; }).join('')
       || '<li class="sc-empty">Scène vide</li>'}</ol>
     ${gm ? `<span class="ini-acts">
       ${s.active ? `<button class="iconbtn" data-act="iniStep" data-d="-1" aria-label="Tour précédent">${ic('minus', 13)}</button><button class="btn xs orange" data-act="iniStep" data-d="1">Tour suivant</button>` : ''}
@@ -61,20 +61,21 @@ iniBar.addEventListener('click', e => {
   const li = e.target.closest('li[data-idx]'); if (!li || e.target.closest('button')) return;
   const entry = iniState().list[+li.dataset.idx], ch = entry && entry.charId && ME.chars.find(c => c.$id === entry.charId);
   if (!ch) return;
-  if (isGmHere() || myCharIds().has(ch.$id)) { ACT.pickChar({ id: ch.$id }); S.tab = 'fiche'; render(); return; }
+  if (isGmHere() || ch.kind !== 'npc') { ACT.pickChar({ id: ch.$id }); S.tab = 'fiche'; render(); return; }
   if (ch.kind === 'npc') npcView(ch);
 });
 
 /* the players' view of an NPC: identity and informations only */
 async function npcView(ch) {
-  openModal(`<h3>${esc(ch.name)}</h3><div id="npcView" class="npc-view"><p class="hint">Chargement…</p></div><div class="modal-acts"><button class="btn" data-act="closeModal">Fermer</button></div>`);
+  openModal(`<h3>${esc(dispName(ch))}</h3><div id="npcView" class="npc-view"><p class="hint">Chargement…</p></div><div class="modal-acts"><button class="btn" data-act="closeModal">Fermer</button></div>`);
   try {
     const [vals, defs] = await Promise.all([rows('character_values', [AW.Q.equal('characterId', ch.$id)]), rows('field_defs', [AW.Q.equal('campaignId', ME.camp.$id), AW.Q.orderAsc('sort')])]);
     const byField = new Map(vals.map(v => [v.fieldId, (() => { try { return JSON.parse(v.value); } catch (_) { return v.value; } })()]));
     const info = defs.filter(d => ['text', 'longtext'].includes(d.kind) && byField.has(d.$id) && String(byField.get(d.$id) || '').trim());
     const get = l => { const d = info.find(x => x.label === l); return d ? String(byField.get(d.$id)) : ''; };
-    const name = [get('Prénom'), get('Nom')].filter(Boolean).join(' ') || ch.name;
+    const name = dispName(ch);
     const box = $('#npcView'); if (!box) return;
+    if (!info.length && !ch.portrait) { box.innerHTML = '<p class="hint">Informations non disponibles.</p>'; return; }
     box.innerHTML = `<div class="ident">${thumb(ch, 104)}<div><div class="ident-name">${esc(name)}</div><div class="ident-sub">${esc(get('Métier') || 'PNJ')}</div></div></div>
       ${info.length ? `<dl class="flavor">${info.filter(d => !['Prénom', 'Nom', 'Métier'].includes(d.label)).map(d => `<div class="fl ${d.kind === 'longtext' ? 'wide' : ''}"><dt>${esc(d.label)}</dt><dd>${esc(String(byField.get(d.$id)))}</dd></div>`).join('')}</dl>` : '<p class="hint">Rien d’autre n’est connu sur ce personnage.</p>'}`;
   } catch (e) { const box = $('#npcView'); if (box) box.innerHTML = `<p class="hint">${esc(errMsg(e))}</p>`; }

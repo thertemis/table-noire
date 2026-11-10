@@ -1,5 +1,6 @@
 // player-action — the few changes a player may make to rows the GM owns.
 // Appwrite permissions cover whole rows, so players never get `update` on GM data; they go through here.
+// Body: { "action": "setIdentity", "characterId", "displayName", "useAlias" }   (own character)
 // Body: { "action": "vote", "pollId", "choices": ["o1", …] }   (the poll's audience)
 // Body: { "action": "comment", "articleId", "body" }   (anyone who can read the article)
 // Body: { "action": "mark", "mapId", "kind": "draw" | "ping", "points": [[x, y], …], "color", "width" }   (any campaign member)
@@ -197,6 +198,15 @@ export default async ({ req, res }) => {
     }
     await db.updateRow({ ...T, rowId: row.$id, data: { equippedSlot: spot.id } });
     return res.json({ ok: true, id: row.$id });
+  }
+
+  if (b.action === 'setIdentity') {
+    // the name shown for the player's own character (scene, lists, dice): alias, or first + last name; and the alias choice
+    const ch = await db.getRow({ databaseId: DATABASE_ID, tableId: 'characters', rowId: String(b.characterId) }).catch(() => null);
+    if (!ch || ch.ownerId !== userId) return deny(res, 'Ce personnage ne t’appartient pas.');
+    const displayName = String(b.displayName ?? '').replace(/\s+/g, ' ').trim().slice(0, 128);
+    await db.updateRow({ databaseId: DATABASE_ID, tableId: 'characters', rowId: ch.$id, data: { displayName, useAlias: b.useAlias === true } });
+    return res.json({ ok: true });
   }
 
   if (b.action === 'vote') {
