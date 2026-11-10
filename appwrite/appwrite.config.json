@@ -1,0 +1,2340 @@
+{
+  "projectId": "<project-id>",
+  "endpoint": "https://appwrite.example.com/v1",
+  "projectName": "Table Noire",
+  "tablesDB": [
+    {
+      "$id": "<database-id>",
+      "name": "main",
+      "enabled": true
+    }
+  ],
+  "tables": [
+    {
+      "$id": "campaigns",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Campagnes",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "name",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "gmUserId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "description",
+          "type": "varchar",
+          "size": 1000,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "sessionNo",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 0,
+          "min": 0
+        },
+        {
+          "key": "sessionName",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "accent",
+          "type": "varchar",
+          "size": 16,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "diceMs",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 5000,
+          "min": 1000,
+          "max": 10000
+        },
+        {
+          "key": "defaultVisibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        },
+        {
+          "key": "allowPlayerLayout",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": true
+        },
+        {
+          "key": "archived",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "equipSlots",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "sheetLayout",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "rollStat",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "rollSkill",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "initiative",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "reveal",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "$id": "profiles",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"users\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Profils",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "username",
+          "type": "varchar",
+          "size": 64,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "color",
+          "type": "varchar",
+          "size": 16,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "u_user",
+          "type": "unique",
+          "columns": [
+            "userId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "invites",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Invitations",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "token",
+          "type": "varchar",
+          "size": 64,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "kind",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "signup",
+            "reset"
+          ],
+          "required": false,
+          "array": false,
+          "default": "signup"
+        },
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "role",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "player",
+            "gm"
+          ],
+          "required": false,
+          "array": false,
+          "default": "player"
+        },
+        {
+          "key": "note",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "createdBy",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "expiresAt",
+          "type": "datetime",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "usedBy",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "usedAt",
+          "type": "datetime",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "u_token",
+          "type": "unique",
+          "columns": [
+            "token"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "invite_claims",
+      "$permissions": [
+        "read(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Invitations utilisées",
+      "enabled": true,
+      "rowSecurity": false,
+      "columns": [
+        {
+          "key": "username",
+          "type": "varchar",
+          "size": 64,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_username",
+          "type": "key",
+          "columns": [
+            "username"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "characters",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Personnages",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "ownerId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "name",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "kind",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "pc",
+            "npc"
+          ],
+          "required": false,
+          "array": false,
+          "default": "pc"
+        },
+        {
+          "key": "portrait",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "layout",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "archived",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "templateId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "inScene",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_owner",
+          "type": "key",
+          "columns": [
+            "ownerId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "player_prefs",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Préférences joueur",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "layout",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "widgetPrefs",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "journal",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "u_user_camp",
+          "type": "unique",
+          "columns": [
+            "userId",
+            "campaignId"
+          ],
+          "orders": [
+            "ASC",
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "field_defs",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Bibliothèque de champs",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "key",
+          "type": "varchar",
+          "size": 64,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "label",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "kind",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "stat",
+            "gauge",
+            "counter",
+            "text",
+            "longtext",
+            "list",
+            "card"
+          ],
+          "required": false,
+          "array": false,
+          "default": "text"
+        },
+        {
+          "key": "config",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "defaultVisibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        },
+        {
+          "key": "sort",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 0
+        }
+      ],
+      "indexes": [
+        {
+          "key": "u_camp_key",
+          "type": "unique",
+          "columns": [
+            "campaignId",
+            "key"
+          ],
+          "orders": [
+            "ASC",
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "character_values",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Valeurs de fiche",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "fieldId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "value",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        }
+      ],
+      "indexes": [
+        {
+          "key": "u_char_field",
+          "type": "unique",
+          "columns": [
+            "characterId",
+            "fieldId"
+          ],
+          "orders": [
+            "ASC",
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_field",
+          "type": "key",
+          "columns": [
+            "fieldId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "wounds",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Blessures",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "zone",
+          "type": "varchar",
+          "size": 32,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "severity",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 0,
+          "min": 0,
+          "max": 4
+        },
+        {
+          "key": "type",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "description",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_char",
+          "type": "key",
+          "columns": [
+            "characterId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "item_defs",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Catalogue d’objets",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "name",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "type",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "rarity",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "common",
+            "uncommon",
+            "rare",
+            "epic",
+            "legend"
+          ],
+          "required": false,
+          "array": false,
+          "default": "common"
+        },
+        {
+          "key": "valueLabel",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "description",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "art",
+          "type": "varchar",
+          "size": 32,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "artFileId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "slot",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "item_instances",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Objets possédés",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "itemDefId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "qty",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 1,
+          "min": 0
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        },
+        {
+          "key": "hiddenFromPlayers",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "equippedSlot",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_char",
+          "type": "key",
+          "columns": [
+            "characterId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "skill_defs",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Catalogue de compétences",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "name",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "statFieldId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "defaultLevel",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 1,
+          "min": 1,
+          "max": 5
+        },
+        {
+          "key": "description",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "skill_instances",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Compétences possédées",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "skillDefId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "level",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 1,
+          "min": 1,
+          "max": 5
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        },
+        {
+          "key": "hiddenFromPlayers",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_char",
+          "type": "key",
+          "columns": [
+            "characterId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "lore_articles",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Lore",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "title",
+          "type": "varchar",
+          "size": 255,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "bodyMd",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "category",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "maps",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Cartes",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "name",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "imageFileId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "width",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null,
+          "min": 1
+        },
+        {
+          "key": "height",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null,
+          "min": 1
+        },
+        {
+          "key": "parentMapId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        },
+        {
+          "key": "fog",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "map_pois",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Points d’intérêt",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "mapId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "x",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "y",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "label",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "description",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "icon",
+          "type": "varchar",
+          "size": 32,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "color",
+          "type": "varchar",
+          "size": 16,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "targetType",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "none",
+            "lore",
+            "map"
+          ],
+          "required": false,
+          "array": false,
+          "default": "none"
+        },
+        {
+          "key": "targetId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_map",
+          "type": "key",
+          "columns": [
+            "mapId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "map_texts",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Textes de carte",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "mapId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "x",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "y",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "text",
+          "type": "varchar",
+          "size": 255,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "size",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 32,
+          "min": 6,
+          "max": 200
+        },
+        {
+          "key": "color",
+          "type": "varchar",
+          "size": 16,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "rotation",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 0,
+          "min": -180,
+          "max": 180
+        },
+        {
+          "key": "visibility",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "gm",
+            "owner",
+            "all"
+          ],
+          "required": false,
+          "array": false,
+          "default": "all"
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_map",
+          "type": "key",
+          "columns": [
+            "mapId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "gm_notes",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Notes MJ",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "entityType",
+          "type": "varchar",
+          "size": 32,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "entityId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "body",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "u_entity",
+          "type": "unique",
+          "columns": [
+            "entityType",
+            "entityId"
+          ],
+          "orders": [
+            "ASC",
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "sheet_templates",
+      "$permissions": [
+        "create(\"users\")",
+        "read(\"users\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Modèles de fiche",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "name",
+          "type": "varchar",
+          "size": 128,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "description",
+          "type": "varchar",
+          "size": 1000,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "ownerId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "ownerName",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "fields",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "layout",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "$id": "session_log",
+      "$permissions": [
+        "create(\"users\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Journal de séance",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "sessionNo",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null,
+          "min": 0
+        },
+        {
+          "key": "body",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "visibility",
+          "type": "varchar",
+          "size": 8,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "authorName",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "change_log",
+      "$permissions": [
+        "create(\"users\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Historique des modifications",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "fieldId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "label",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "before",
+          "type": "varchar",
+          "size": 1000,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "after",
+          "type": "varchar",
+          "size": 1000,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userName",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_char",
+          "type": "key",
+          "columns": [
+            "characterId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "notebook_pages",
+      "$permissions": [
+        "create(\"users\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Carnets de notes",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "sort",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "title",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "body",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_user_camp",
+          "type": "key",
+          "columns": [
+            "userId",
+            "campaignId"
+          ],
+          "orders": [
+            "ASC",
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "dice_rolls",
+      "$permissions": [
+        "read(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Journal de dés",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "username",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "characterName",
+          "type": "varchar",
+          "size": 128,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "formula",
+          "type": "varchar",
+          "size": 255,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "detail",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "total",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    }
+  ],
+  "buckets": [
+    {
+      "$id": "portraits",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "fileSecurity": true,
+      "name": "Portraits",
+      "enabled": true,
+      "maximumFileSize": 5000000,
+      "allowedFileExtensions": [
+        "png",
+        "jpg",
+        "jpeg",
+        "webp"
+      ],
+      "compression": "none",
+      "encryption": true,
+      "antivirus": false
+    },
+    {
+      "$id": "item-art",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "fileSecurity": true,
+      "name": "Illustrations d’objets",
+      "enabled": true,
+      "maximumFileSize": 5000000,
+      "allowedFileExtensions": [
+        "png",
+        "jpg",
+        "jpeg",
+        "webp"
+      ],
+      "compression": "none",
+      "encryption": true,
+      "antivirus": false
+    },
+    {
+      "$id": "lore-images",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "fileSecurity": true,
+      "name": "Images de lore",
+      "enabled": true,
+      "maximumFileSize": 15000000,
+      "allowedFileExtensions": [
+        "png",
+        "jpg",
+        "jpeg",
+        "webp"
+      ],
+      "compression": "none",
+      "encryption": true,
+      "antivirus": false
+    },
+    {
+      "$id": "maps",
+      "$permissions": [
+        "create(\"users\")",
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "fileSecurity": true,
+      "name": "Cartes",
+      "enabled": true,
+      "maximumFileSize": 30000000,
+      "allowedFileExtensions": [
+        "png",
+        "jpg",
+        "jpeg",
+        "webp"
+      ],
+      "compression": "none",
+      "encryption": true,
+      "antivirus": false
+    }
+  ],
+  "functions": [
+    {
+      "$id": "redeem-invite",
+      "name": "redeem-invite",
+      "runtime": "node-22",
+      "execute": [
+        "any"
+      ],
+      "events": [],
+      "schedule": "",
+      "timeout": 30,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/redeem-invite",
+      "scopes": [
+        "users.read",
+        "users.write",
+        "teams.read",
+        "teams.write",
+        "rows.read",
+        "rows.write"
+      ]
+    },
+    {
+      "$id": "admin",
+      "name": "admin",
+      "runtime": "node-22",
+      "execute": [
+        "users"
+      ],
+      "events": [],
+      "schedule": "",
+      "timeout": 120,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/admin",
+      "scopes": [
+        "users.read",
+        "users.write",
+        "teams.read",
+        "teams.write",
+        "rows.read",
+        "rows.write",
+        "files.read",
+        "files.write"
+      ]
+    },
+    {
+      "$id": "roll-dice",
+      "name": "roll-dice",
+      "runtime": "node-22",
+      "execute": [
+        "users"
+      ],
+      "events": [],
+      "schedule": "",
+      "timeout": 15,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/roll-dice",
+      "scopes": [
+        "users.read",
+        "teams.read",
+        "rows.read",
+        "rows.write"
+      ]
+    },
+    {
+      "$id": "player-action",
+      "name": "player-action",
+      "runtime": "node-22",
+      "execute": [
+        "users"
+      ],
+      "events": [],
+      "schedule": "",
+      "timeout": 15,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/player-action",
+      "scopes": [
+        "teams.read",
+        "rows.read",
+        "rows.write"
+      ]
+    },
+    {
+      "$id": "apply-visibility",
+      "name": "apply-visibility",
+      "runtime": "node-22",
+      "execute": [],
+      "events": [
+        "databases.<database-id>.tables.character_values.rows.*.create",
+        "databases.<database-id>.tables.character_values.rows.*.update",
+        "databases.<database-id>.tables.wounds.rows.*.create",
+        "databases.<database-id>.tables.wounds.rows.*.update",
+        "databases.<database-id>.tables.item_instances.rows.*.create",
+        "databases.<database-id>.tables.item_instances.rows.*.update",
+        "databases.<database-id>.tables.skill_instances.rows.*.create",
+        "databases.<database-id>.tables.skill_instances.rows.*.update",
+        "databases.<database-id>.tables.lore_articles.rows.*.create",
+        "databases.<database-id>.tables.lore_articles.rows.*.update",
+        "databases.<database-id>.tables.maps.rows.*.create",
+        "databases.<database-id>.tables.maps.rows.*.update",
+        "databases.<database-id>.tables.map_pois.rows.*.create",
+        "databases.<database-id>.tables.map_pois.rows.*.update",
+        "databases.<database-id>.tables.map_texts.rows.*.create",
+        "databases.<database-id>.tables.map_texts.rows.*.update",
+        "databases.<database-id>.tables.characters.rows.*.create",
+        "databases.<database-id>.tables.characters.rows.*.update",
+        "databases.<database-id>.tables.field_defs.rows.*.create",
+        "databases.<database-id>.tables.field_defs.rows.*.update",
+        "databases.<database-id>.tables.item_defs.rows.*.create",
+        "databases.<database-id>.tables.item_defs.rows.*.update",
+        "databases.<database-id>.tables.skill_defs.rows.*.create",
+        "databases.<database-id>.tables.skill_defs.rows.*.update",
+        "databases.<database-id>.tables.gm_notes.rows.*.create",
+        "databases.<database-id>.tables.gm_notes.rows.*.update"
+      ],
+      "schedule": "",
+      "timeout": 15,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/apply-visibility",
+      "scopes": [
+        "rows.read",
+        "rows.write"
+      ]
+    },
+    {
+      "$id": "guard-signup",
+      "name": "guard-signup",
+      "runtime": "node-22",
+      "execute": [],
+      "events": [
+        "users.*.create"
+      ],
+      "schedule": "",
+      "timeout": 45,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/guard-signup",
+      "scopes": [
+        "users.read",
+        "users.write"
+      ]
+    },
+    {
+      "$id": "image-search",
+      "name": "image-search",
+      "runtime": "node-22",
+      "execute": [
+        "users"
+      ],
+      "events": [],
+      "schedule": "",
+      "timeout": 20,
+      "enabled": true,
+      "logging": true,
+      "entrypoint": "src/main.js",
+      "commands": "npm install",
+      "path": "functions/image-search",
+      "scopes": []
+    }
+  ]
+}

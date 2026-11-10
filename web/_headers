@@ -1,0 +1,16 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://appwrite.example.com https://*.wikimedia.org https://cdn.pixabay.com https://pixabay.com https://*.mm.bing.net https://external-content.duckduckgo.com; connect-src 'self' data: https://appwrite.example.com wss://appwrite.example.com https://commons.wikimedia.org https://*.wikimedia.org; media-src 'self' data: blob:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+
+# app code: always revalidate (some CDN zones otherwise let browsers keep it for hours)
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/*.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache

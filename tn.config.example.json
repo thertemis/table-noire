@@ -1,0 +1,8 @@
+{
+  "appwrite": {
+    "endpoint": "https://appwrite.example.com/v1",
+    "projectId": "<project-id>",
+    "databaseId": "<database-id>"
+  },
+  "site": "https://<user>.github.io/<repo>"
+}

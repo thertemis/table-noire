@@ -1,0 +1,30 @@
+# Secrets — never commit
+infra/appwrite/portainer-stack.yml
+*.env
+.env*
+!.env.example
+*.pem
+*.key
+*.keystore
+*.jks
+
+# Tooling caches
+.ruff_cache/
+__pycache__/
+*.pyc
+node_modules/
+.claude/settings.local.json
+
+# Appwrite CLI build artefacts
+appwrite/functions/*/code.tar.gz
+.appwrite/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.wrangler/
+
+# Public export
+.export-denylist
