@@ -24,8 +24,8 @@ const I18N = (() => {
   if (dict) for (const [fr, en] of Object.entries(dict)) {
     if (!/\{\d+\}/.test(fr)) { exact.set(norm(fr), en); continue; }
     const bits = fr.split(/\{(\d+)\}/), order = [];
-    const re = new RegExp('^' + bits.map((b, i) => i % 2 ? (order.push(+b), '(.+?)') : reEsc(norm(b) === '' ? b : b.replace(/\s+/g, ' '))).join('') + '$', 's');
-    pats.push({ re, order, en, lit: bits.filter((_, i) => !(i % 2)).join('').length });
+    const re = new RegExp('^' + bits.map((b, i) => i % 2 ? (order.push(+b), '(.*?)') : reEsc(norm(b) === '' ? b : b.replace(/\s+/g, ' '))).join('') + '$', 's');
+    pats.push({ re, order, en, lit: bits.filter((_, i) => !(i % 2)).join('').length, dot: fr.includes(' · ') });
   }
   pats.sort((a, b) => b.lit - a.lit);   // most specific first
   const word = /[A-Za-zÀ-ÿ]{2}/;
@@ -36,14 +36,17 @@ const I18N = (() => {
     if (miss.has(c)) return null;
     for (const p of pats) {
       const m = p.re.exec(c);
-      if (!m) continue;
-      return p.en.replace(/\{(\d+)\}/g, (_, n) => { const v = m[p.order.indexOf(+n) + 1] ?? ''; const t = exact.get(v.trim()); return t !== undefined ? v.replace(v.trim(), t) : v; });
+      if (!m || (!p.dot && m.some((v, i) => i && v.includes(' · ')))) continue;   // "a · b" joins are split below
+      return p.en.replace(/\{(\d+)\}/g, (_, n) => { const v = m[p.order.indexOf(+n) + 1] ?? ''; const t = v.trim() && v.trim() !== c ? core(v.trim()) : null; return t != null ? v.replace(v.trim(), t) : v; });
     }
     // "Coupure · Modérée", "Compétences · ce personnage": parts joined by a middle dot, translated one by one
     if (c.includes(' · ')) {
-      const parts = c.split(' · '), tr = parts.map(p => exact.get(p));
-      if (tr.some(x => x !== undefined)) return parts.map((p, i) => tr[i] ?? p).join(' · ');
+      const parts = c.split(' · '), tr = parts.map(p => p.includes(' · ') ? null : core(p));
+      if (tr.some(x => x != null)) return parts.map((p, i) => tr[i] ?? p).join(' · ');
     }
+    // "Vêtement #4f8d89", "Accent 3": a label followed by a colour or a number
+    const tail = /^(.+?) (#[0-9a-f]{3,8}|\d+)$/i.exec(c);
+    if (tail) { const l = exact.get(tail[1]); if (l !== undefined) return `${l} ${tail[2]}`; }
     if (miss.size > 20000) miss.clear();
     miss.add(c);
     return null;

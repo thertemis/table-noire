@@ -60,7 +60,7 @@ const looksUi = s => {
   if (/^[\w.-]+$/.test(t) && !/^[A-ZÀ-Ý]/.test(t) && !/[à-ÿ]/.test(t)) return false;   // identifiers, keys, css classes
   if (/^[a-z]+([A-Z][a-z]+)+$/.test(t)) return false;                                    // camelCase
   if (/^(https?:|data:|#|\.|\/|[a-z-]+:[^ ])/.test(t)) return false;                     // urls, selectors, css
-  if (/[{};]|=>|\bvar\(|\bpx\b|^\d/.test(t)) return false;                                   // code, css values
+  if (/[{}]|[^ ];|;[^ ]|=>|\bvar\(|\bpx\b|^\d/.test(t)) return false;   // (French " ; " is text)                                  // code, css values
   if (/^[MLHVCSQTAZ][\d\s.,MLHVCSQTAZ-]*$/i.test(t) && /\d/.test(t)) return false;           // svg path data
   if (/^[\w.-]+\/[\w./-]+$/.test(t)) return false;                                         // file paths
   if (!/[A-Za-zÀ-ÿ]{2,}/.test(t)) return false;                                            // no word (dice notation…)
@@ -84,7 +84,10 @@ function strings(parts) {
     const full = raw.replace(/\s+/g, ' ').trim().replace(/^(\u0001\s*)+/, '');
     // a leading value followed by a space ("${n} contacts…", "${on ? 'Couper' : 'Activer'} le son…") is text, not an icon
     const lead = raw.replace(/\s+/g, ' ').trim();
-    if (/^\u0001 \S/.test(lead)) { let m = 0; const p = lead.replace(/(\s*\u0001)+$/, '').replace(/\u0001/g, () => `{${m++}}`); if (p !== t && ok(p)) found.push(p); }
+    if (/^\u0001 \S/.test(lead)) {
+      let m = 0; const p = lead.replace(/(\s*\u0001)+$/, '').replace(/\u0001/g, () => `{${m++}}`); if (p !== t && ok(p)) found.push(p);
+      if (/\S\s*\u0001$/.test(lead)) { let k = 0; const b = lead.replace(/\u0001/g, () => `{${k++}}`); if (b !== t && b !== p && ok(b)) found.push(b); }   // value at both ends
+    }
     if (/\u0001$/.test(full) && /\S\s*\u0001$/.test(full)) { let m = 0; const p = full.replace(/\u0001/g, () => `{${m++}}`); if (p !== t && ok(p)) found.push(p); }
   };
   for (const m of s.matchAll(ATTR)) add(m[2]);
