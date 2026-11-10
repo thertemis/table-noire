@@ -40,10 +40,14 @@ const I18N = (() => {
       return p.en.replace(/\{(\d+)\}/g, (_, n) => { const v = m[p.order.indexOf(+n) + 1] ?? ''; const t = v.trim() && v.trim() !== c ? core(v.trim()) : null; return t != null ? v.replace(v.trim(), t) : v; });
     }
     // "Coupure · Modérée", "Compétences · ce personnage": parts joined by a middle dot, translated one by one
-    if (c.includes(' · ')) {
-      const parts = c.split(' · '), tr = parts.map(p => p.includes(' · ') ? null : core(p));
-      if (tr.some(x => x != null)) return parts.map((p, i) => tr[i] ?? p).join(' · ');
+    // (also "· N° 0412" when the text before the dot is in another node)
+    if (/(^|\s)·(\s|$)/.test(c)) {
+      const parts = c.split(/\s*·\s*/), tr = parts.map(p => p ? core(p) : null);
+      if (tr.some(x => x != null)) return parts.map((p, i) => tr[i] ?? p).join(' · ').trim();
     }
+    // two sentences built separately and shown together ("Clique une carte… Tu peux cacher…")
+    const sent = c.split(/(?<=[.!?…])\s+(?=[A-ZÀ-Ý«])/);
+    if (sent.length > 1) { const tr = sent.map(s => core(s)); if (tr.some(x => x != null)) return sent.map((s, i) => tr[i] ?? s).join(' '); }
     // "Vêtement #4f8d89", "Accent 3": a label followed by a colour or a number
     const tail = /^(.+?) (#[0-9a-f]{3,8}|\d+)$/i.exec(c);
     if (tail) { const l = exact.get(tail[1]); if (l !== undefined) return `${l} ${tail[2]}`; }

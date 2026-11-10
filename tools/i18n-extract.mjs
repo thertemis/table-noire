@@ -64,7 +64,7 @@ const looksUi = s => {
   if (/^[MLHVCSQTAZ][\d\s.,MLHVCSQTAZ-]*$/i.test(t) && /\d/.test(t)) return false;           // svg path data
   if (/^[\w.-]+\/[\w./-]+$/.test(t)) return false;                                         // file paths
   if (!/[A-Za-zÀ-ÿ]{2,}/.test(t)) return false;                                            // no word (dice notation…)
-  if (/^[A-Z_]{2,}$/.test(t) && !/^(FOR|AGI|INT|PER|VOL|CHA|MJ|PNJ|PV)$/.test(t)) return false;
+  if (/^[A-Z_]{2,}$/.test(t) && !/^(FOR|AGI|INT|PER|VOL|CHA|MJ|PNJ|PV|JOUEUR|SÉANCE)$/.test(t)) return false;
   return true;
 };
 // "pas {0}", "{0} lancers": a word next to a value is text even when it looks like an identifier
