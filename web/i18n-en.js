@@ -210,7 +210,7 @@ const I18N_EN = {
   "Aucun lien": "No link",
   "Article ·": "Article ·",
   "Couleur {0}": "Colour {0}",
-  "Taille": "Size",
+  "Taille": "Height",
   "Rotation": "Rotation",
   "Article · {0}": "Article · {0}",
   "Nom du point": "Point name",
@@ -1326,6 +1326,15 @@ const I18N_EN = {
   "Lancer en tant que": "Roll as",
   "Informations non disponibles.": "No information available.",
   "lecture": "read only",
-  "statistiques": "stats"
+  "statistiques": "stats",
+  "Verrouillé par le MJ": "Locked by the GM",
+  "Verrouillé : seul le MJ peut le modifier": "Locked: only the GM can change it",
+  "Modifiable par le joueur": "The player can change it",
+  "Verrouiller pour le joueur": "Lock for the player",
+  "Taille du texte": "Text size",
+  "Ceinture": "Waist",
+  "Taille du cadre": "Frame size",
+  "Des votes existent : les réponses ne peuvent plus changer.": "Votes exist: the answers can no longer change.",
+  "Sondage modifié": "Poll updated"
 };
 const I18N_SAME = ["First name","Last name","input,textarea,select","[name=u]","[name=u]:checked","[name=c]:checked","[data-mt-width]","[data-scale]","[data-mark]","Français","English","Inès","Hugo","un au port.","Église Saint-Roch","Le Quai des Brumes","La Marque du Veilleur","rgba(220,235,245,.08)","RÉSERVE 1871","INONDATION 1955","ZONE CONDAMNÉE","rgba(230,238,242,.7)","ARCHIVES MUNICIPALES · SOUS-SOL B · RELEVÉ 1960 · ÉCH. 1/100","fill=\"{0}\" fill-opacity=\".88\"","draggable=\"true\"","style=\"background:radial-gradient(circle at 35% 30%,#fff3,{0} 60%)\"","Cellule Hélios","lore:","map:","translate({0} {1}) scale({2})","scale({0})","gauge:","wound:","Enter","![Légende](asset:blueprint)","[data-act]","Escape","fid:","DOMContentLoaded","maps/","maps/{0}","item-art/","item-art/{0}","application/json,.json","input[name=c]:checked","Table Noire","class=\"card","class=\"card stacked","class=\"card stacked {0}","[data-tile=\"{0}\"] .tile-body","[data-tile=\"{0}\"]","X...XX...X.X","X.XXXXXX.X..","X...XXX...X.","X.XXX.XXX.X.","XX.X...X.XX.","XX.......XX.","XX......XX..","XX.XXXX.XX..","XX.XX","Bip","rotate({0}deg)","[data-iknob]","[data-pot]","rgba(240,160,80,{0})","rgba(255,255,255,.55)","rgba(44,51,34,.06)","[data-tile=\"fid_timer\"]","rgba(47,41,34,.35)","rgba(184,54,42,.5)","rgba(17,16,14,{0})","rgba(231,220,196,.06)","rgba(231,220,196,.12)","[data-fog-size]","[data-act=\"gmHub\"]","$createdAt","[data-crop=\"size\"]","[data-crop]","[data-is]","[data-is=\"src\"]","[data-act=\"iniOpen\"]","[name=name]","[name=init]","lore:{0}","map:{0}","li[data-idx]","@players.tablenoire.invalid","TABLE NOIRE","button,input","$id","[data-gate]","[data-um],[data-cm],[data-mm]","filter=\"url(#{0}r)\"","fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"","fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"{0}","transform=\"translate(2.6 2)\"","fill-opacity=\"{0}\"","[data-rv-close]","[data-act=\"revealImage\"]","image/png,image/jpeg,image/webp","(max-width:1100px)","[data-tile=\"stats\"] .dial","(data-id=\"{0}\"[^>]*>[\\s\\S]*?","noopener noreferrer","Val-Sombre","La porte murée","min=\"0\"","placeholder=\"https://appwrite.mondomaine.fr/v1\" spellcheck=\"false\"","spellcheck=\"false\"","X-Appwrite-Project","[data-act=\"layoutEdit\"]","button[type=submit]","SÉANCE 12 · VAL-SOMBRE","Utilisateur supprimé :","Utilisateur supprimé : {0}","Campagne créée : {0} ({1})","read(\"team:{0}\")","read(\"team:","Campagne supprimée : {0} ({1} fichiers supprimés, {2} gardés pour d’autres campagnes)","Restauration de {0} campagne(s) depuis","Restauration de {0} campagne(s) depuis {1}","read(","Compte non invité supprimé :","Compte non invité supprimé : {0}","::ffff:","User-Agent","image/*","Accept-Language","Mot de passe réinitialisé pour","Mot de passe réinitialisé pour {0}","Compte créé pour {0} ({1})","Compte créé pour {0} ({1}){2}"];

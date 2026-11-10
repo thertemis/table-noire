@@ -5,7 +5,7 @@
 //   TEAM tables  read team:<c>
 //   GM tables    read team:<c>/gm
 // Always: update + delete team:<c>/gm. The admin reads everything through table-level label:admin.
-import { Client, TablesDB, Permission, Role } from 'node-appwrite';
+import { Client, TablesDB, Permission, Role, Query } from 'node-appwrite';
 import { DATABASE_ID, VIS_TABLES, TEAM_TABLES, GM_TABLES } from './config.js';
 
 export default async ({ req, res, log }) => {
@@ -42,6 +42,17 @@ export default async ({ req, res, log }) => {
     else {
       wanted.push(Permission.read(gm));
       if ((vis === 'all' || vis === 'owner') && ownerId) wanted.push(Permission.read(Role.user(ownerId)));
+    }
+  }
+
+  // lore comments follow their article: readable by the campaign when it is public, by the GMs otherwise
+  if (tableId === 'lore_articles') {
+    const reader = row.visibility === 'all' ? team : gm;
+    const comments = await db.listRows({ databaseId: DATABASE_ID, tableId: 'lore_comments', queries: [Query.equal('articleId', row.$id), Query.limit(500)] }).then(r => r.rows).catch(() => []);
+    for (const cm of comments) {
+      const want = [Permission.read(reader), Permission.delete(gm), ...(cm.authorId ? [Permission.delete(Role.user(cm.authorId))] : [])];
+      if ([...(cm.$permissions || [])].sort().join('|') !== [...want].sort().join('|'))
+        await db.updateRow({ databaseId: DATABASE_ID, tableId: 'lore_comments', rowId: cm.$id, data: {}, permissions: want }).catch(() => {});
     }
   }
 

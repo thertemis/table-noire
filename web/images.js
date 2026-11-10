@@ -17,7 +17,7 @@ function openCropper(src, kind, cb, credit = '') {
     let fw = Math.min(W, H * ar), fh = fw / ar; const st = { x: (W - fw) / 2, y: (H - fh) / 2, s: 1 };
     cropBox.innerHTML = `<div class="crop-card"><div class="crop-head"><span class="led"></span><b>Recadrer · ${K.label}</b><span class="grow"></span><button class="iconbtn" data-crop="cancel" aria-label="Annuler">${ic('x', 14)}</button></div>
       <div class="crop-stage" style="width:${W}px;height:${H}px"><img src="${esc(src)}" alt="" draggable="false"><div class="crop-frame"></div></div>
-      <div class="crop-row"><label>Taille<input type="range" min="20" max="100" value="100" data-crop="size"></label><span class="grow"></span>
+      <div class="crop-row"><label>Taille du cadre<input type="range" min="20" max="100" value="100" data-crop="size"></label><span class="grow"></span>
         ${credit ? `<small class="crop-credit">${credit}</small>` : ''}</div>
       <div class="modal-acts"><button class="btn" data-crop="cancel">Annuler</button><button class="btn orange" data-crop="ok">Utiliser</button></div></div>`;
     cropBox.hidden = false;

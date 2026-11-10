@@ -92,12 +92,12 @@ async function loadSheet(charId) {
     const visible = d => SH.vals.has(d.$id);   // players only get the rows they may read
     const V = d => SH.vals.get(d.$id);
     C.stats = defsSorted.filter(d => d.kind === 'stat' && visible(d)).map(d => ({ id: d.$id, name: d.label, abbr: d.cfg.abbr || d.label.slice(0, 3).toUpperCase(),
-      value: V(d).value?.value ?? 10, max: V(d).value?.max ?? d.cfg.max ?? 20, vis: visFromDb(V(d).vis), roll: d.cfg.roll || '' }));
+      value: V(d).value?.value ?? 10, max: V(d).value?.max ?? d.cfg.max ?? 20, vis: visFromDb(V(d).vis), roll: d.cfg.roll || '', locked: !!d.cfg.gm_locked }));
     C.gauges = defsSorted.filter(d => (d.kind === 'gauge' || d.kind === 'counter') && visible(d)).map(d => ({ id: d.$id, label: d.label,
       value: V(d).value?.value ?? 0, max: V(d).value?.max ?? d.cfg.max ?? 10, step: V(d).value?.step ?? d.cfg.step ?? 1,
       color: d.cfg.color || '#d6a23c', hi: d.cfg.hi || '#e9bd62', unit: d.cfg.unit || '', counter: d.kind === 'counter', vis: visFromDb(V(d).vis) }));
     C.flavor = defsSorted.filter(d => (d.kind === 'text' || d.kind === 'longtext') && visible(d)).map(d => ({ id: d.$id, label: d.label,
-      value: typeof V(d).value === 'string' ? V(d).value : '', vis: visFromDb(V(d).vis), wide: d.kind === 'longtext' }));
+      value: typeof V(d).value === 'string' ? V(d).value : '', vis: visFromDb(V(d).vis), wide: d.kind === 'longtext', locked: !!d.cfg.gm_locked }));
     SH.notesDef = defsSorted.find(d => d.kind === 'card') || null;
     C.notes = SH.notesDef && visible(SH.notesDef) ? (typeof V(SH.notesDef).value === 'string' ? V(SH.notesDef).value : '') : '';
     C.wounds = Object.fromEntries([...SH.wounds.entries()].map(([z, x]) => [z, { ...x.w }]));
@@ -132,11 +132,11 @@ async function syncSheet() {
 }
 
 function defDataOf(kind, item, sort) {
-  if (kind === 'stat') return { label: item.name, kind: 'stat', config: JSON.stringify({ abbr: item.abbr, max: item.max, default: 10, ...(item.roll ? { roll: String(item.roll).slice(0, 128) } : {}) }), sort };
+  if (kind === 'stat') return { label: item.name, kind: 'stat', config: JSON.stringify({ abbr: item.abbr, max: item.max, default: 10, ...(item.roll ? { roll: String(item.roll).slice(0, 128) } : {}), ...(item.locked ? { gm_locked: true } : {}) }), sort };
   if (kind === 'gauge') return item.counter
     ? { label: item.label, kind: 'counter', config: JSON.stringify({ unit: item.unit || '', step: item.step || 1, min: 0, player_editable: true }), sort }
     : { label: item.label, kind: 'gauge', config: JSON.stringify({ color: item.color, hi: item.hi, max: item.max, step: item.step || 1, min: 0, player_editable: true }), sort };
-  return { label: item.label, kind: item.wide ? 'longtext' : 'text', config: '{}', sort };
+  return { label: item.label, kind: item.wide ? 'longtext' : 'text', config: item.locked ? '{"gm_locked":true}' : '{}', sort };
 }
 function valueOf(kind, item) {
   if (kind === 'stat') return { value: +item.value || 0, max: +item.max || 20 };
@@ -355,3 +355,6 @@ async function preloadCampaign() {
 }
 const _leave = leaveCampaign;
 leaveCampaign = function () { if (SH.unsub) { SH.unsub(); SH.unsub = null; } SH.charId = null; _leave(); };
+
+// GM: lock a stat / information field so the player cannot change it (player-action refuses config.gm_locked)
+ACT.toggleLock = d => { const o = (d.k === 'stat' ? C.stats : C.flavor).find(x => x.id === d.id); if (o) o.locked = !o.locked; };

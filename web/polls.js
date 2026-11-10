@@ -62,20 +62,24 @@ function pollHtml(p) {
         <span class="po-label">${esc(o.label)}</span>${showResults ? `<span class="po-bar" style="--pc:${pc}%"></span><span class="po-n">${n} · ${pc} %</span>` : ''}
         ${names.length ? `<small class="po-who">${esc(names.join(', '))}</small>` : ''}</label>`; }).join('')}
       ${canVote ? `<div class="edit-row"><span class="hint">${mine ? 'Tu peux changer ton vote tant que le sondage est ouvert.' : ''}</span><span class="grow"></span><button class="btn xs orange" type="submit">${mine ? 'Changer mon vote' : 'Voter'}</button></div>` : ''}</form>
-    ${gm ? `<div class="edit-row"><span class="grow"></span><button class="btn xs" data-act="pollClose" data-id="${p.$id}">${p.closed ? 'Rouvrir' : 'Fermer'}</button>
+    ${gm ? `<div class="edit-row"><span class="grow"></span><button class="btn xs" data-act="pollEdit" data-id="${p.$id}">${ic('edit', 12)}Modifier</button><button class="btn xs" data-act="pollClose" data-id="${p.$id}">${p.closed ? 'Rouvrir' : 'Fermer'}</button>
       <button class="iconbtn" data-act="pollDel" data-id="${p.$id}" aria-label="Supprimer le sondage">${ic('trash', 12)}</button></div>` : ''}</article>`;
 }
 async function pollsModal() {
   const gm = ME.role === 'gm';
   if (gm && !POLL.members) POLL.members = await admin('listMembers', { campaignId: ME.camp.$id }).then(r => r.members.filter(m => !(m.roles || []).includes('gm'))).catch(() => []);
-  const form = gm && POLL.form ? `<form class="form poll-new well" id="pollNew">
-      <label class="full">Question<input class="field" name="question" maxlength="255" required placeholder="ex. On joue samedi ?"></label>
-      <label class="full">Réponses (une par ligne)<textarea class="field" name="options" rows="4" required placeholder="Oui&#10;Non&#10;Peut-être"></textarea></label>
-      <label class="chk"><input type="checkbox" name="multi">Plusieurs choix possibles</label>
-      <label class="chk"><input type="checkbox" name="anonymous">Vote anonyme (personne ne voit qui a voté quoi)</label>
-      <fieldset class="full poll-aud"><legend>Qui peut voir et voter</legend><label class="chk"><input type="checkbox" name="all" checked>Tous les joueurs</label>
-        ${(POLL.members || []).map(m => `<label class="chk"><input type="checkbox" name="u" value="${esc(m.userId)}">${esc(m.name || ME.names[m.userId] || '?')}</label>`).join('')}</fieldset>
-      <div class="modal-acts full"><button type="button" class="btn" data-act="pollForm">Annuler</button><button class="btn orange" type="submit">Créer le sondage</button></div></form>` : '';
+  const ed = typeof POLL.form === 'string' ? POLL.list.find(x => x.$id === POLL.form) : null;
+  const edAud = ed ? (() => { try { return JSON.parse(ed.audience || '[]'); } catch (_) { return []; } })() : [];
+  const voted = ed ? (pollTally(ed).voters || 0) > 0 : false;
+  const form = gm && POLL.form ? `<form class="form poll-new well" id="pollNew" data-id="${ed ? ed.$id : ''}">
+      <label class="full">Question<input class="field" name="question" maxlength="255" required placeholder="ex. On joue samedi ?" value="${esc(ed ? ed.question : '')}"></label>
+      <label class="full">Réponses (une par ligne)<textarea class="field" name="options" rows="4" required placeholder="Oui&#10;Non&#10;Peut-être" ${voted ? 'disabled' : ''}>${esc(ed ? pollOpts(ed).map(o => o.label).join('\n') : '')}</textarea>
+        ${voted ? '<small class="hint">Des votes existent : les réponses ne peuvent plus changer.</small>' : ''}</label>
+      <label class="chk"><input type="checkbox" name="multi" ${ed && ed.multi ? 'checked' : ''}>Plusieurs choix possibles</label>
+      <label class="chk"><input type="checkbox" name="anonymous" ${ed && ed.anonymous ? 'checked' : ''} ${voted ? 'disabled' : ''}>Vote anonyme (personne ne voit qui a voté quoi)</label>
+      <fieldset class="full poll-aud"><legend>Qui peut voir et voter</legend><label class="chk"><input type="checkbox" name="all" ${!edAud.length ? 'checked' : ''}>Tous les joueurs</label>
+        ${(POLL.members || []).map(m => `<label class="chk"><input type="checkbox" name="u" value="${esc(m.userId)}" ${edAud.includes(m.userId) ? 'checked' : ''}>${esc(m.name || ME.names[m.userId] || '?')}</label>`).join('')}</fieldset>
+      <div class="modal-acts full"><button type="button" class="btn" data-act="pollForm">Annuler</button><button class="btn orange" type="submit">${ed ? 'Enregistrer' : 'Créer le sondage'}</button></div></form>` : '';
   openModal(`<h3>Sondages</h3>${gm && !POLL.form ? `<div class="edit-row"><button class="btn orange" data-act="pollForm">${ic('plus')}Nouveau sondage</button></div>` : ''}${form}
     <div class="polls">${POLL.list.length ? POLL.list.map(pollHtml).join('') : '<p class="hint">Aucun sondage pour l’instant.</p>'}</div>
     <div class="modal-acts"><span class="grow"></span><button class="btn" data-act="closeModal">Fermer</button></div>`);
@@ -84,6 +88,7 @@ async function pollsModal() {
 Object.assign(ACT, {
   pollsOpen: () => { POLL.form = false; pollsModal(); return false; },
   pollForm: () => { POLL.form = !POLL.form; pollsModal(); return false; },
+  pollEdit: d => { POLL.form = d.id; pollsModal(); return false; },
   pollClose: d => { const p = POLL.list.find(x => x.$id === d.id); if (p) admin('pollSave', { campaignId: ME.camp.$id, pollId: p.$id, closed: !p.closed, audience: JSON.parse(p.audience || '[]') }).then(loadPolls).catch(e => toast(errMsg(e))); return false; },
   pollDel: d => {
     const p = POLL.list.find(x => x.$id === d.id); if (!p || !confirm(`Supprimer le sondage « ${p.question} » et ses votes ?`)) return false;
@@ -103,8 +108,9 @@ document.addEventListener('submit', async e => {
     const audience = f.all.checked ? [] : [...f.querySelectorAll('[name=u]:checked')].map(x => x.value);
     if (!f.all.checked && !audience.length) { toast('Choisis au moins un joueur, ou « Tous les joueurs ».'); return; }
     try {
-      await admin('pollSave', { campaignId: ME.camp.$id, question: f.question.value, options: f.options.value.split('\n'), multi: f.multi.checked, anonymous: f.anonymous.checked, audience });
-      POLL.form = false; await loadPolls(); pollsModal(); toast('Sondage créé');
+      const id = f.dataset.id || undefined;
+      await admin('pollSave', { campaignId: ME.camp.$id, pollId: id, question: f.question.value, ...(f.options.disabled ? {} : { options: f.options.value.split('\n') }), multi: f.multi.checked, ...(f.anonymous.disabled ? {} : { anonymous: f.anonymous.checked }), audience });
+      POLL.form = false; await loadPolls(); pollsModal(); toast(id ? 'Sondage modifié' : 'Sondage créé');
     } catch (err) { toast('Sondage non créé : ' + errMsg(err)); }
     return;
   }

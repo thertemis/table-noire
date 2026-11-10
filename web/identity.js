@@ -121,10 +121,23 @@ function rollIdentity() {
   const id = opts.some(o => o[0] === IDENT.as) ? IDENT.as : opts[0][0], ch = ME.chars.find(c => c.$id === id);
   return { charId: id, name: dispName(ch) };
 }
-/** Aliases take the open sheet's stats: refuse them when rolling as another character. */
-function aliasCheck(typed, formula, rollChar) {
-  if (typed === formula || !rollChar || rollChar === SH.charId) return '';
-  return `Les alias (${tr('statistiques')}) viennent de la fiche ouverte : ouvre celle de ${dispName(ME.chars.find(c => c.$id === rollChar))}.`;
+/** Stats for the aliases of a roll: the open sheet when it is the roller's, otherwise read from the server
+    (sheet values plus the modifiers of the items the character has equipped). */
+async function statsFor(charId) {
+  if (!charId || charId === SH.charId) return openSheetStats();
+  const c = ME.camp.$id, J = (v, d) => { try { return JSON.parse(v); } catch (_) { return d; } };
+  const [defs, vals, inst] = await Promise.all([
+    rows('field_defs', [AW.Q.equal('campaignId', c), AW.Q.equal('kind', 'stat')]),
+    rows('character_values', [AW.Q.equal('characterId', charId)]),
+    rows('item_instances', [AW.Q.equal('characterId', charId)]).catch(() => []) ]);
+  const byField = new Map(vals.map(v => [v.fieldId, J(v.value, {})]));
+  const stats = defs.filter(d => byField.has(d.$id)).map(d => { const cfg = J(d.config, {}); return { abbr: cfg.abbr || d.label.slice(0, 3).toUpperCase(), name: d.label, value: +(byField.get(d.$id)?.value ?? 10) }; });
+  for (const o of inst) {
+    if (!o.equippedSlot) continue;
+    const def = ITEMS.find(i => i.id === o.itemDefId); if (!def || !def.mods) continue;
+    for (const [k, n] of Object.entries(parseMods(def.mods, stats))) { const s = stats.find(x => x.abbr === k); if (s) s.value += n; }
+  }
+  return stats;
 }
 function rebuildAs() {
   const box = $('#dAsBox'); if (!box) return;

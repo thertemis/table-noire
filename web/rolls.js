@@ -79,13 +79,14 @@ ACT.rollSkill = d => {
 
 /* aliases: a stat's abbreviation (FOR, AGI… or its English display STR, WIL…) stands for its value on the open sheet,
    e.g. (2d6+AGI)*FOR. Dice ("d6", "2d20", "d%") are not aliases. */
-function withAliases(src) {
+const openSheetStats = () => (C.stats || []).map(s => ({ abbr: s.abbr, name: s.name, value: typeof effStat === 'function' ? effStat(s) : +s.value || 0 }));
+function withAliases(src, list = openSheetStats()) {
   const map = new Map();
-  for (const s of C.stats || []) for (const k of [s.abbr, tr(s.abbr), s.name, tr(s.name)]) if (k && /^[A-Za-zÀ-ÿ_]+$/.test(k)) map.set(k.toUpperCase(), typeof effStat === 'function' ? effStat(s) : +s.value || 0);
+  for (const s of list) for (const k of [s.abbr, tr(s.abbr), s.name, tr(s.name)]) if (k && /^[A-Za-zÀ-ÿ_]+$/.test(k)) map.set(k.toUpperCase(), s.value);
   return String(src).replace(/(?<![A-Za-z0-9_À-ÿ])([A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ_0-9]*)/g, (m, id) => {
     if (/^d(\d*|%)$/i.test(id)) return m;
     const v = map.get(id.toUpperCase());
-    if (v === undefined) throw new Error(`Alias inconnu « ${id} » (${[...new Set((C.stats || []).map(s => tr(s.abbr)))].join(', ') || 'aucune statistique'})`);
+    if (v === undefined) throw new Error(`Alias inconnu « ${id} » (${[...new Set(list.map(s => tr(s.abbr)))].join(', ') || 'aucune statistique'})`);
     return String(v);
   });
 }

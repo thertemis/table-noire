@@ -12,7 +12,7 @@ const ME = { user: null, isAdmin: false, camp: null, role: null, chars: [], char
 const ONLINE = { unsub: null, holding: false, held: [] };
 
 /* ---------------------------------------------------------------- helpers */
-const BUILD = '2026-11-10.36';
+const BUILD = '2026-11-10.37';
 const loginEmail = id => (id.includes('@') ? id.trim() : `${id.trim().toLowerCase()}@players.tablenoire.invalid`);
 const appLink = (kind, token) => `${location.origin}${location.pathname}?${kind}=${token}`;
 async function call(functionId, body) {
@@ -446,17 +446,21 @@ roll = async function onlineRoll() {
   if (rolling || !ME.camp) return;
   let ast, formula;
   const typed = dF.value.trim();
-  try { formula = typeof withAliases === 'function' ? withAliases(typed) : typed; ast = parse(formula); } catch (err) { $('#dErr').textContent = err.message; return; }
+  // who rolls: a stat / skill roll belongs to the open sheet (the player's own); otherwise the roller's choice (identity.js)
+  const as = typeof rollIdentity === 'function' ? rollIdentity() : { charId: null, name: ME.user.name };
+  const rollChar = (ONLINE.next || {}).charId || as.charId;
+  try {
+    const hasAlias = /[A-Za-zÀ-ÿ_]/.test(typed.replace(/\d*d(\d+|%)/gi, ''));   // letters left once the dice are removed
+    const stats = hasAlias && typeof statsFor === 'function' ? await statsFor(rollChar) : undefined;
+    formula = typeof withAliases === 'function' ? withAliases(typed, stats) : typed; ast = parse(formula);
+  } catch (err) { $('#dErr').textContent = err.message; return; }
   const faces = diceList(ast);
   if (faces.length > 200) { $('#dErr').textContent = 'Maximum 200 dés par lancer.'; return; }
   rolling = true; ONLINE.holding = true; ONLINE.held = []; $('#dErr').textContent = '';
   const btn = $('#dRoll'), sub = $('#dSub');
   // a roll started from the sheet carries its label and character; the dock toggle makes it secret
   const sheetRoll = ONLINE.next || {}; ONLINE.next = null;
-  // who rolls: a stat / skill roll belongs to the open sheet (the player's own); otherwise the roller's choice (identity.js)
-  const as = typeof rollIdentity === 'function' ? rollIdentity() : { charId: null, name: ME.user.name };
-  const rollChar = sheetRoll.charId || as.charId, secret = !!$('#dSecret')?.checked;
-  if (typeof aliasCheck === 'function') { const err = aliasCheck(typed, formula, rollChar); if (err) { $('#dErr').textContent = err; rolling = false; ONLINE.holding = false; return; } }
+  const secret = !!$('#dSecret')?.checked;
   const ch = ME.chars.find(c => c.$id === rollChar);
   btn.disabled = true; btn.textContent = 'Les dés roulent…';
   const whoName = sheetRoll.charId ? dispName(ME.chars.find(c => c.$id === sheetRoll.charId)) : as.name;

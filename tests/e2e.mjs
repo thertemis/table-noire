@@ -192,6 +192,11 @@ try {
   const gmArt = await row(admin, 'lore_articles', { campaignId: camp, title: 'Secret', bodyMd: 'x', visibility: 'gm' });
   const com = await fn(player, 'player-action', { action: 'comment', articleId: pubArt.$id, body: 'Bonjour' });
   check('a player comments a public lore article', com.ok, com.message);
+  // the article becomes secret: its comments follow (apply-visibility)
+  await api(admin, 'PATCH', `/tablesdb/${DB}/tables/lore_articles/rows/${pubArt.$id}`, { data: { visibility: 'gm' } });
+  await new Promise(r => setTimeout(r, 4000));
+  check('comments follow their article when it becomes secret', (await list(player, 'lore_comments', q('equal', 'articleId', [pubArt.$id]))).length === 0
+    && (await list(admin, 'lore_comments', q('equal', 'articleId', [pubArt.$id]))).length === 1);
   check('a player cannot comment a GM-only article', (await fn(player, 'player-action', { action: 'comment', articleId: gmArt.$id, body: 'x' })).ok === false);
 
   // polls: one vote per person, changeable while open; audience, anonymity and closing enforced by the server

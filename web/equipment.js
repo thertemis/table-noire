@@ -18,7 +18,7 @@ const DEFAULT_SLOTS = [
   { id: 'teton_g', label: 'Téton gauche', type: 'teton', view: 'front', x: 246, y: 205, cap: 1 },
   { id: 'haut', label: 'Haut', type: 'haut', view: 'front', x: 213, y: 252, cap: 2 },
   { id: 'corps', label: 'Corps', type: 'corps', view: 'front', x: 213, y: 330, cap: 1 },
-  { id: 'ceinture', label: 'Taille', type: 'ceinture', view: 'front', x: 213, y: 410, cap: 1 },
+  { id: 'ceinture', label: 'Ceinture', type: 'ceinture', view: 'front', x: 213, y: 410, cap: 1 },
   { id: 'bas', label: 'Bas', type: 'bas', view: 'front', x: 213, y: 545, cap: 2 },
   { id: 'pieds', label: 'Pieds', type: 'pieds', view: 'front', x: 213, y: 862, cap: 2 },
   { id: 'poignet_d', label: 'Poignet droit', type: 'poignet', view: 'front', x: 74, y: 414, cap: 2 },
@@ -156,9 +156,11 @@ TABS.splice(TABS.findIndex(t => t[0] === 'inventaire') + 1, 0, ['equipement', '�
 const _renderMapEq = renderMap;
 renderMap = function () { return S.tab === 'equipement' ? renderEquipment() : _renderMapEq(); };
 
+// the waist spot of campaigns saved before it was renamed
+const spotLabel = s => s.type === 'ceinture' && s.label === 'Taille' ? 'Ceinture' : s.label;
 function spotSvg(s) {
   const n = equippedIn(s.id).length, cap = s.cap || 1;
-  return `<g class="spot ${n ? 'on' : ''} ${n >= cap ? 'full' : ''} ${EQ.sel === s.id ? 'sel' : ''}" data-spot="${esc(s.id)}" transform="translate(${s.x} ${s.y})" tabindex="0" role="button" aria-label="${esc(s.label)}, ${n} sur ${cap}">
+  return `<g class="spot ${n ? 'on' : ''} ${n >= cap ? 'full' : ''} ${EQ.sel === s.id ? 'sel' : ''}" data-spot="${esc(s.id)}" transform="translate(${s.x} ${s.y})" tabindex="0" role="button" aria-label="${esc(spotLabel(s))}, ${n} sur ${cap}">
     <circle r="11"/>${n ? `<text>${n}</text>` : ''}</g>`;
 }
 function eqPlate(view, img, cap) {
@@ -174,7 +176,7 @@ function eqSide() {
   }
   const on = equippedIn(s.id), cap = s.cap || 1;
   const free = INV.filter(o => !o.slot && ownVisible(o) && defOf(o)?.slot === s.type);
-  return `<div style="display:flex;align-items:center;gap:6px"><h4>${esc(s.label)}</h4><span class="grow"></span><button class="iconbtn" data-act="eqSel" data-id="" aria-label="Fermer">${ic('x', 13)}</button></div>
+  return `<div style="display:flex;align-items:center;gap:6px"><h4>${esc(spotLabel(s))}</h4><span class="grow"></span><button class="iconbtn" data-act="eqSel" data-id="" aria-label="Fermer">${ic('x', 13)}</button></div>
     <p class="hint" style="margin:0">${esc(typeLabel(s.type))} · ${on.length}/${cap}</p>
     <ul class="eq-list">${on.map(o => `<li><b class="grow">${esc(defOf(o)?.name || '?')}</b>${canEquip() ? `<button class="btn xs" data-act="unequip" data-id="${o.iid}">Retirer</button>` : ''}</li>`).join('') || '<li class="hint">Rien d’équipé.</li>'}</ul>
     ${canEquip() && on.length < cap && free.length ? `<div class="lab">Équiper ici</div><ul class="eq-list">${free.map(o => `<li><span class="grow">${esc(defOf(o).name)}${(o.qty || 1) > 1 ? ` <small>×${o.qty}</small>` : ''}</span><button class="btn xs orange" data-act="equipTo" data-id="${o.iid}" data-slot="${esc(s.id)}">Équiper</button></li>`).join('')}</ul>` : ''}
@@ -184,7 +186,7 @@ function renderEquipment() {
   const name = esc(charName());
   if (!SH.charId) return `<div class="toolbar"><div><h2>Équipement</h2><div class="sub">Choisis d’abord un personnage.</div></div></div>`;
   const slots = eqSlots(), groups = [];
-  for (const s of slots) { const on = equippedIn(s.id); if (on.length) groups.push([s.label, `${on.length}/${s.cap || 1}`, on]); }
+  for (const s of slots) { const on = equippedIn(s.id); if (on.length) groups.push([spotLabel(s), `${on.length}/${s.cap || 1}`, on]); }
   const lost = INV.filter(o => o.slot && !slotById(o.slot) && ownVisible(o));
   if (lost.length) groups.push(['Emplacement supprimé', '', lost]);
   return `<div class="toolbar"><div><h2>Équipement · ${name}</h2><div class="sub">Ce que ${name} porte sur lui, et où.</div></div><span class="grow"></span>
@@ -204,7 +206,7 @@ document.addEventListener('pointerover', e => {
   if (!g) { eqTip.classList.remove('show'); return; }
   const s = slotById(g.dataset.spot); if (!s) return;
   const on = equippedIn(s.id);
-  eqTip.innerHTML = `<h5>${esc(s.label)} · ${on.length}/${s.cap || 1}</h5>${on.length ? `<div class="cards">${on.map(o => { const d = defOf(o); return d ? cardHtml(d, o, false) : ''; }).join('')}</div>` : '<p class="hint" style="margin:0">Libre</p>'}`;
+  eqTip.innerHTML = `<h5>${esc(spotLabel(s))} · ${on.length}/${s.cap || 1}</h5>${on.length ? `<div class="cards">${on.map(o => { const d = defOf(o); return d ? cardHtml(d, o, false) : ''; }).join('')}</div>` : '<p class="hint" style="margin:0">Libre</p>'}`;
   const r = g.getBoundingClientRect();
   eqTip.classList.add('show');
   const w = eqTip.offsetWidth, h = eqTip.offsetHeight;
@@ -269,9 +271,9 @@ async function saveSlots(list) {
    An item's "modifiers" text ("FOR+2, AGI-1") is read against the sheet's stats (abbreviation, English abbreviation or
    name). The equipped items of the open character add up; the equipment tab shows base, bonus and effective value,
    and rolls (stat click, aliases in formulas) use the effective value. */
-function parseMods(text) {
+function parseMods(text, stats = C.stats || []) {
   const out = {};
-  const find = k => (C.stats || []).find(s => [s.abbr, tr(s.abbr), s.name, tr(s.name)].some(x => x && x.toUpperCase() === k.toUpperCase()));
+  const find = k => stats.find(s => [s.abbr, tr(s.abbr), s.name, tr(s.name)].some(x => x && x.toUpperCase() === k.toUpperCase()));
   for (const m of String(text || '').matchAll(/([A-Za-zÀ-ÿ_]+)\s*([+-]\s*\d+)/g)) {
     const s = find(m[1]); if (!s) continue;
     out[s.abbr] = (out[s.abbr] || 0) + parseInt(m[2].replace(/\s+/g, ''), 10);

@@ -382,7 +382,7 @@ function tStats() {
   if (S.statEdit && !isMJ() && S.viewer === 'owner') {
     return tile('stats', 'Statistiques', `<div class="edit-list">${C.stats.filter(s => canSee(s.vis)).map(s => `<div class="edit-row">
       <span class="w-name" style="flex:1">${esc(s.name)}</span>
-      <input class="field w-num" type="number" min="0" max="${s.max}" data-bind="stat:${s.id}:value" value="${s.value}" aria-label="Valeur ${esc(s.name)}"><span class="hint">/ ${s.max}</span></div>`).join('')}
+      ${s.locked ? `<b class="w-num" title="Verrouillé par le MJ">${s.value}</b><span class="hint">${ic('lock', 11)}</span>` : `<input class="field w-num" type="number" min="0" max="${s.max}" data-bind="stat:${s.id}:value" value="${s.value}" aria-label="Valeur ${esc(s.name)}">`}<span class="hint">/ ${s.max}</span></div>`).join('')}
       <div class="edit-row"><span class="grow"></span><button class="btn xs orange" data-act="statEdit">Terminé</button></div></div>`);
   }
   if (S.statEdit && isMJ()) {
@@ -392,7 +392,7 @@ function tStats() {
       <input class="field w-num" type="number" data-bind="stat:${s.id}:value" value="${s.value}" aria-label="Valeur">
       <input class="field w-num" type="number" data-bind="stat:${s.id}:max" value="${s.max}" aria-label="Maximum">
       <input class="field" style="width:130px" data-bind="stat:${s.id}:roll" value="${esc(s.roll || '')}" placeholder="Jet (facultatif)" title="Formule du jet au clic, ex. 1d20+{mod} ou (2d6+AGI)*FOR. Vide : formule de la campagne." aria-label="Formule de jet" spellcheck="false">
-      ${visBadge('stat', s.id, s.vis)}<button class="iconbtn" data-act="rmStat" data-id="${s.id}" aria-label="Supprimer ${esc(s.name)}">${ic('trash',13)}</button></div>`).join('')}
+      <button class="iconbtn lockbtn ${s.locked ? 'on' : ''}" data-act="toggleLock" data-k="stat" data-id="${s.id}" title="${s.locked ? 'Verrouillé : seul le MJ peut le modifier' : 'Modifiable par le joueur'}" aria-pressed="${!!s.locked}" aria-label="Verrouiller pour le joueur">${ic('lock', 13)}</button>${visBadge('stat', s.id, s.vis)}<button class="iconbtn" data-act="rmStat" data-id="${s.id}" aria-label="Supprimer ${esc(s.name)}">${ic('trash',13)}</button></div>`).join('')}
       <div class="edit-row"><button class="btn xs" data-act="addStat">${ic('plus',12)}Statistique</button><span class="grow"></span><button class="btn xs orange" data-act="statEdit">Terminé</button></div></div>`);
   }
   return tile('stats', 'Statistiques', `<div class="stats">${C.stats.filter(s => canSee(s.vis)).map(s => `<div class="dial well">${dialSvg(s.value, s.max, STATCOL[s.abbr] || 'var(--mustard)')}<div class="dial-name">${esc(s.name)}</div>${s.vis !== 'all' ? visBadge('stat', s.id, s.vis) : ''}</div>`).join('')}</div>`,
@@ -489,14 +489,14 @@ function tFlavor() {
   if (S.flavorEdit && !isMJ() && S.viewer === 'owner') {
     return tile('flavor', 'Informations', `<div class="edit-list">${C.flavor.filter(f => canSee(f.vis)).map(f => `<div class="edit-row">
       <span style="width:140px" class="hint">${esc(f.label)}</span>
-      ${f.wide ? `<textarea class="field w-name" data-bind="flavor:${f.id}:value" rows="3" aria-label="${esc(f.label)}">${esc(f.value)}</textarea>` : `<input class="field w-name" data-bind="flavor:${f.id}:value" value="${esc(f.value)}" aria-label="${esc(f.label)}">`}</div>`).join('')}
+      ${f.locked ? `<span class="w-name" title="Verrouillé par le MJ" style="white-space:pre-line">${esc(f.value) || '—'} ${ic('lock', 11)}</span>` : f.wide ? `<textarea class="field w-name" data-bind="flavor:${f.id}:value" rows="3" aria-label="${esc(f.label)}">${esc(f.value)}</textarea>` : `<input class="field w-name" data-bind="flavor:${f.id}:value" value="${esc(f.value)}" aria-label="${esc(f.label)}">`}</div>`).join('')}
       <div class="edit-row"><span class="grow"></span><button class="btn xs orange" data-act="flavorEdit">Terminé</button></div></div>`);
   }
   if (S.flavorEdit && isMJ()) {
     return tile('flavor', 'Informations', `<div class="edit-list">${C.flavor.map(f => `<div class="edit-row">
       <input class="field" style="width:140px" data-bind="flavor:${f.id}:label" value="${esc(f.label)}" aria-label="Libellé">
       ${f.wide ? `<textarea class="field w-name" data-bind="flavor:${f.id}:value" rows="3">${esc(f.value)}</textarea>` : `<input class="field w-name" data-bind="flavor:${f.id}:value" value="${esc(f.value)}" aria-label="Valeur">`}
-      ${visBadge('flavor', f.id, f.vis)}<button class="iconbtn" data-act="rmFlavor" data-id="${f.id}" aria-label="Supprimer">${ic('trash',13)}</button></div>`).join('')}
+      <button class="iconbtn lockbtn ${f.locked ? 'on' : ''}" data-act="toggleLock" data-k="flavor" data-id="${f.id}" title="${f.locked ? 'Verrouillé : seul le MJ peut le modifier' : 'Modifiable par le joueur'}" aria-pressed="${!!f.locked}" aria-label="Verrouiller pour le joueur">${ic('lock', 13)}</button>${visBadge('flavor', f.id, f.vis)}<button class="iconbtn" data-act="rmFlavor" data-id="${f.id}" aria-label="Supprimer">${ic('trash',13)}</button></div>`).join('')}
       <div class="edit-row"><button class="btn xs" data-act="addFlavor">${ic('plus',12)}Champ court</button><button class="btn xs" data-act="addFlavorWide">${ic('plus',12)}Champ long</button><span class="grow"></span><button class="btn xs orange" data-act="flavorEdit">Terminé</button></div></div>`);
   }
   return tile('flavor', 'Informations', `<dl class="flavor">${C.flavor.filter(f => canSee(f.vis)).map(f => `<div class="fl ${f.wide?'wide':''} ${f.vis==='mj'?'locked':''}"><dt>${esc(f.label)} ${f.vis!=='all'?visBadge('flavor', f.id, f.vis):''}</dt><dd>${esc(f.value)}</dd></div>`).join('')}</dl>`,
@@ -642,7 +642,7 @@ function popover() {
   let html;
   if (isText) {
     html = edit ? `<input class="field" data-bind="mtext:${it.id}:text" value="${esc(it.text)}" aria-label="Texte">
-      <div class="edit-row"><span class="hint">Taille</span><input type="range" min="12" max="90" value="${it.size}" data-bind="mtext:${it.id}:size" aria-label="Taille" style="flex:1"></div>
+      <div class="edit-row"><span class="hint">Taille du texte</span><input type="range" min="12" max="90" value="${it.size}" data-bind="mtext:${it.id}:size" aria-label="Taille" style="flex:1"></div>
       <div class="edit-row"><span class="hint">Rotation</span><input type="range" min="-45" max="45" value="${it.rot}" data-bind="mtext:${it.id}:rot" aria-label="Rotation" style="flex:1"></div>
       <div class="swatches">${POI_COLORS.concat(['#f0d9b5']).map(c => `<button style="--sw:${c}" data-act="itemColor" data-c="${c}" aria-pressed="${it.color===c}" aria-label="Couleur ${c}"></button>`).join('')}</div>
       <div class="edit-row">${visBadge('mtext', it.id, it.vis)}<span class="grow"></span><button class="iconbtn" data-act="delItemMap" aria-label="Supprimer">${ic('trash',13)}</button><button class="btn xs orange" data-act="closePop">OK</button></div>`
