@@ -1,11 +1,15 @@
 // player-action — the few changes a player may make to rows the GM owns.
 // Appwrite permissions cover whole rows, so players never get `update` on GM data; they go through here.
+// Body: { "action": "vote", "pollId", "choices": ["o1", …] }   (the poll's audience)
+// Body: { "action": "comment", "articleId", "body" }   (anyone who can read the article)
+// Body: { "action": "mark", "mapId", "kind": "draw" | "ping", "points": [[x, y], …], "color", "width" }   (any campaign member)
 // Body: { "action": "toggleHidden", "tableId": "item_instances" | "skill_instances", "rowId": "..." }
 //       { "action": "setValue", "rowId": "<character_values id>", "value": <number|string> }
 //         (gauges/counters with config.player_editable; on their own character, also stats, information fields and the
 //          card, unless the value is GM-only or the field has config.gm_locked)
-import { Client, TablesDB, Query, ID, Permission, Role } from 'node-appwrite';
+import { Client, TablesDB, Teams, Query, ID, Permission, Role } from 'node-appwrite';
 import { DATABASE_ID, PUBLIC_ENDPOINT } from './config.js';
+import { createHash } from 'node:crypto';
 import { campaignSlots } from './slots.js';
 
 const deny = (res, message, status = 403) => res.json({ ok: false, message }, status);
@@ -192,6 +196,74 @@ export default async ({ req, res }) => {
       return res.json({ ok: true, id: one.$id });
     }
     await db.updateRow({ ...T, rowId: row.$id, data: { equippedSlot: spot.id } });
+    return res.json({ ok: true, id: row.$id });
+  }
+
+  if (b.action === 'vote') {
+    // one vote per person (changeable while the poll is open); the poll keeps the tally its readers see
+    const P = { databaseId: DATABASE_ID, tableId: 'polls' }, V = { databaseId: DATABASE_ID, tableId: 'poll_votes' };
+    const poll = await db.getRow({ ...P, rowId: String(b.pollId) }).catch(() => null);
+    if (!poll) return deny(res, 'Sondage introuvable.', 404);
+    if (poll.closed) return deny(res, 'Ce sondage est fermé.', 409);
+    const c = poll.campaignId;
+    const m = await new Teams(client).listMemberships({ teamId: c, queries: [Query.equal('userId', userId), Query.limit(1)] }).then(r => r.memberships[0]).catch(() => null);
+    if (!m) return deny(res, 'Tu ne fais pas partie de cette campagne.');
+    const audience = JSON.parse(poll.audience || '[]');
+    if (audience.length && !audience.includes(userId) && !(m.roles || []).includes('gm')) return deny(res, 'Ce sondage ne t’est pas destiné.');
+    const ids = new Set(JSON.parse(poll.options || '[]').map(o => o.id));
+    const choices = [...new Set((Array.isArray(b.choices) ? b.choices : []).map(String))].filter(x => ids.has(x));
+    if (!choices.length || (!poll.multi && choices.length > 1)) return deny(res, poll.multi ? 'Choisis au moins une réponse.' : 'Choisis une seule réponse.', 400);
+    const rowId = 'v' + createHash('sha1').update(poll.$id + ':' + userId).digest('hex').slice(0, 32);
+    const who = await db.listRows({ databaseId: DATABASE_ID, tableId: 'profiles', queries: [Query.equal('userId', userId), Query.limit(1)] }).then(r => r.rows[0]?.username).catch(() => '');
+    // anonymous poll: the vote carries no identity (even the server admin, who reads every row, cannot tell who voted what)
+    const data = { campaignId: c, pollId: poll.$id, userId: poll.anonymous ? '' : userId, userName: poll.anonymous ? '' : (who || '').slice(0, 64), choices: JSON.stringify(choices) };
+    const permissions = [Permission.read(Role.user(userId)), ...(poll.anonymous ? [] : [Permission.read(Role.team(c, 'gm'))]), Permission.delete(Role.team(c, 'gm'))];
+    const had = await db.getRow({ ...V, rowId }).catch(() => null);
+    if (had) await db.updateRow({ ...V, rowId, data: { choices: data.choices } }); else await db.createRow({ ...V, rowId, data, permissions });
+    const votes = await db.listRows({ ...V, queries: [Query.equal('pollId', poll.$id), Query.limit(500)] }).then(r => r.rows);
+    const counts = {}; for (const v of votes) for (const x of JSON.parse(v.choices || '[]')) counts[x] = (counts[x] || 0) + 1;
+    const tally = { counts, voters: votes.length };
+    await db.updateRow({ ...P, rowId: poll.$id, data: { tally: JSON.stringify(tally) } });
+    return res.json({ ok: true, tally });
+  }
+
+  if (b.action === 'comment') {
+    // a comment under a lore article the user can read: same readers as the article, removable by its author and the GMs
+    const art = await db.getRow({ databaseId: DATABASE_ID, tableId: 'lore_articles', rowId: String(b.articleId) }).catch(() => null);
+    if (!art) return deny(res, 'Article introuvable.', 404);
+    const c = art.campaignId;
+    const m = await new Teams(client).listMemberships({ teamId: c, queries: [Query.equal('userId', userId), Query.limit(1)] }).then(r => r.memberships[0]).catch(() => null);
+    if (!m) return deny(res, 'Tu ne fais pas partie de cette campagne.');
+    const isGm = (m.roles || []).includes('gm');
+    if (art.visibility !== 'all' && !isGm) return deny(res, 'Article réservé au MJ.');
+    const body = String(b.body || '').trim().slice(0, 4000);
+    if (!body) return deny(res, 'Commentaire vide.', 400);
+    const who = await db.listRows({ databaseId: DATABASE_ID, tableId: 'profiles', queries: [Query.equal('userId', userId), Query.limit(1)] }).then(r => r.rows[0]?.username).catch(() => '');
+    const gm = Role.team(c, 'gm');
+    const row = await db.createRow({ databaseId: DATABASE_ID, tableId: 'lore_comments', rowId: ID.unique(),
+      permissions: [Permission.read(art.visibility === 'all' ? Role.team(c) : gm), Permission.delete(Role.user(userId)), Permission.delete(gm)],
+      data: { campaignId: c, articleId: art.$id, body, authorId: userId, authorName: (who || b.name || '').slice(0, 64) } });
+    return res.json({ ok: true, id: row.$id });
+  }
+
+  if (b.action === 'mark') {
+    // a drawing or a ping on a map, by any member of its campaign: read by the campaign, removable by its author and the GMs
+    const map = await db.getRow({ databaseId: DATABASE_ID, tableId: 'maps', rowId: String(b.mapId) }).catch(() => null);
+    if (!map) return deny(res, 'Carte introuvable.', 404);
+    const c = map.campaignId;
+    const member = await new Teams(client).listMemberships({ teamId: c, queries: [Query.equal('userId', userId), Query.limit(1)] }).then(r => r.total > 0).catch(() => false);
+    if (!member) return deny(res, 'Tu ne fais pas partie de cette campagne.');
+    const kind = b.kind === 'ping' ? 'ping' : 'draw';
+    const pts = (Array.isArray(b.points) ? b.points : []).slice(0, kind === 'ping' ? 1 : 1500)
+      .map(p => [Math.round(+p[0]), Math.round(+p[1])]).filter(p => p.every(n => Number.isFinite(n) && Math.abs(n) < 1e6));
+    if (!pts.length || (kind === 'draw' && pts.length < 2)) return deny(res, 'Tracé vide.', 400);
+    const color = /^#[0-9a-fA-F]{3,8}$/.test(b.color || '') ? b.color : '#e2672c';
+    const width = Math.max(1, Math.min(60, Math.round(+b.width || 4)));
+    const who = await db.listRows({ databaseId: DATABASE_ID, tableId: 'profiles', queries: [Query.equal('userId', userId), Query.limit(1)] }).then(r => r.rows[0]?.username).catch(() => '');
+    const gm = Role.team(c, 'gm'), me = Role.user(userId);
+    const row = await db.createRow({ databaseId: DATABASE_ID, tableId: 'map_marks', rowId: ID.unique(),
+      permissions: [Permission.read(Role.team(c)), Permission.delete(me), Permission.delete(gm)],
+      data: { campaignId: c, mapId: map.$id, kind, points: JSON.stringify(pts), color, width, authorId: userId, authorName: (who || b.name || '').slice(0, 64) } });
     return res.json({ ok: true, id: row.$id });
   }
 

@@ -150,6 +150,13 @@
           "required": false,
           "array": false,
           "default": null
+        },
+        {
+          "key": "loreCategories",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
         }
       ],
       "indexes": []
@@ -964,6 +971,14 @@
           "required": false,
           "array": false,
           "default": null
+        },
+        {
+          "key": "modifiers",
+          "type": "varchar",
+          "size": 500,
+          "required": false,
+          "array": false,
+          "default": null
         }
       ],
       "indexes": [
@@ -1653,6 +1668,348 @@
           "type": "key",
           "columns": [
             "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "map_marks",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Dessins et pings",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "mapId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "kind",
+          "type": "string",
+          "format": "enum",
+          "elements": [
+            "draw",
+            "ping"
+          ],
+          "required": false,
+          "array": false,
+          "default": "draw"
+        },
+        {
+          "key": "points",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "color",
+          "type": "varchar",
+          "size": 16,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "width",
+          "type": "integer",
+          "required": false,
+          "array": false,
+          "default": 4,
+          "min": 1,
+          "max": 60
+        },
+        {
+          "key": "authorId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "authorName",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_map",
+          "type": "key",
+          "columns": [
+            "mapId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "lore_comments",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Commentaires du lore",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "articleId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "body",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "authorId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "authorName",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_article",
+          "type": "key",
+          "columns": [
+            "articleId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "polls",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Sondages",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "question",
+          "type": "varchar",
+          "size": 255,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "options",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "audience",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "multi",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "anonymous",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "closed",
+          "type": "boolean",
+          "required": false,
+          "array": false,
+          "default": false
+        },
+        {
+          "key": "tally",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        }
+      ]
+    },
+    {
+      "$id": "poll_votes",
+      "$permissions": [
+        "create(\"label:admin\")",
+        "read(\"label:admin\")",
+        "update(\"label:admin\")",
+        "delete(\"label:admin\")"
+      ],
+      "databaseId": "<database-id>",
+      "name": "Votes",
+      "enabled": true,
+      "rowSecurity": true,
+      "columns": [
+        {
+          "key": "campaignId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "pollId",
+          "type": "varchar",
+          "size": 36,
+          "required": true,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "userName",
+          "type": "varchar",
+          "size": 64,
+          "required": false,
+          "array": false,
+          "default": null
+        },
+        {
+          "key": "choices",
+          "type": "text",
+          "required": false,
+          "array": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "key": "k_campaign",
+          "type": "key",
+          "columns": [
+            "campaignId"
+          ],
+          "orders": [
+            "ASC"
+          ]
+        },
+        {
+          "key": "k_poll",
+          "type": "key",
+          "columns": [
+            "pollId"
           ],
           "orders": [
             "ASC"

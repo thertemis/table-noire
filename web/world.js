@@ -25,7 +25,7 @@ async function loadWorld(quiet = false) {
       map_pois: new Map(pois.map(r => [r.$id, r])), map_texts: new Map(texts.map(r => [r.$id, r])) };
     clearWorld();
     lore.sort((a, b) => a.$createdAt.localeCompare(b.$createdAt))
-      .forEach(r => LORE.push({ id: r.$id, title: r.title, vis: visFromDb(r.visibility), md: r.bodyMd || '' }));
+      .forEach(r => LORE.push({ id: r.$id, title: r.title, vis: visFromDb(r.visibility), md: r.bodyMd || '', cat: r.category || '' }));
     maps.forEach(r => { MAPS[r.$id] = { name: r.name, parent: r.parentMapId || null, img: r.imageFileId ? fileUrl('maps', r.imageFileId) : '',
       fileId: r.imageFileId || '', w: r.width || 1600, h: r.height || 1100, vis: visFromDb(r.visibility), credit: '', pois: [], texts: [],
       fog: (() => { try { return JSON.parse(r.fog || 'null'); } catch (_) { return null; } })() }; });
@@ -70,8 +70,9 @@ const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(+v || 0)));
 function desiredWorld() {
   const c = ME.camp.$id, want = { lore_articles: new Map(), maps: new Map(), map_pois: new Map(), map_texts: new Map() };
   for (const a of LORE) {
-    const h = /^#\s+(.+)$/m.exec(a.md || ''); if (h) a.title = h[1].trim();   // the title follows the first heading
-    want.lore_articles.set(a.id, { title: String(a.title || 'Article').slice(0, 255), bodyMd: a.md || '', visibility: visToDb(a.vis) });
+    // the title is its own field (lore.js); an untitled article still takes its first heading
+    if (!String(a.title || '').trim()) { const h = /^#\s+(.+)$/m.exec(a.md || ''); a.title = h ? h[1].trim() : 'Article'; }
+    want.lore_articles.set(a.id, { title: String(a.title).slice(0, 255), bodyMd: a.md || '', visibility: visToDb(a.vis), category: String(a.cat || '').slice(0, 64) });
   }
   for (const [id, m] of Object.entries(MAPS)) {
     want.maps.set(id, { name: String(m.name || 'Carte').slice(0, 128), imageFileId: m.fileId || '', width: clampInt(m.w, 1, 1e6), height: clampInt(m.h, 1, 1e6),

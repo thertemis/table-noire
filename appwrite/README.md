@@ -5,7 +5,7 @@ modifié : `node tools/configure.mjs`.
 
 ## Contenu
 
-- `build_config.py` : schéma lisible (24 tables, 4 buckets, 7 Functions). Génère `appwrite.config.json` et
+- `build_config.py` : schéma lisible (28 tables, 4 buckets, 7 Functions). Génère `appwrite.config.json` et
   `functions/*/src/config.js` (listes de tables partagées par les Functions).
 - `functions/` : `admin`, `redeem-invite`, `roll-dice`, `player-action`, `apply-visibility`, `guard-signup`, `image-search` (variable `PIXABAY_KEY` à renseigner dans la console : Functions → image-search → Settings → Variables)
   (Node 22, `node-appwrite` 29.0.0). Voir ARCHITECTURE.md § 4.

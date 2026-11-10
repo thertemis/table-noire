@@ -40,25 +40,33 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
   state (silhouette, organs, skull) with located wounds, notes, information.
 - **Sheet templates** shared by every user of the server.
 - Per-field visibility: *everyone*, *GM + owner* or *GM only*, enforced by the server.
+- Players edit their own stats and information fields, and read the other players' sheets, inventory and equipment
+  (public fields only); each player can rearrange their sheet and save or reuse layouts as templates.
 - Change history the GM can browse and roll back.
 
 **Inventory, equipment, skills**
 - Item and skill library per campaign, with search, filters and sorting, import / export without duplicates.
 - Stackable items, rarities, items hidden from players, giving items between characters, using one unit.
-- **Equipment** tab: anatomical view with slots (head, body, fingers, ears…), editable capacities and custom slots.
+- **Equipment** tab: the character's stats with the equipped items' bonuses above an anatomical view with slots (head,
+  body, fingers, ears…, editable capacities, custom slots); the equippable items below, filtered by the slot clicked.
+- Item **modifiers** (`FOR+2, AGI-1`) applied while equipped, rolls included.
 
 **World**
-- **Lore**: Markdown articles with images, secret articles, advanced search (`"exact phrase"`, `-exclude`).
-- **Maps**: image import, points of interest linked to the lore, labels, **fog of war** revealed by the GM.
+- **Lore**: list or grid of Markdown articles (images, tables), coloured categories, secret articles, advanced search
+  (`"exact phrase"`, `-exclude`), comments under articles.
+- **Maps**: image import, points of interest linked to the lore, labels, **fog of war** set per map and revealed or
+  covered with a brush by the GM; measure (with the map's scale), draw and ping, shared live with the whole table.
 - Reveals: the GM pushes an image or a text to the players’ screens.
 
 **At the table**
-- Real-time shared **dice roller**: formulas (`(2d6+1d8-4)*2`), named rolls, secret rolls, the same log for everyone,
+- Real-time shared **dice roller**: formulas (`(2d6+1d8-4)*2`), stat aliases (`(2d6+AGI)*FOR`), a roll on a stat's
+  click or a skill's button (each with its own formula if wanted), named rolls, secret rolls, the same log for everyone,
   which the GM can clear.
 - **Scene bar**: portraits of the characters and NPCs present, reorderable turn order, current turn.
 - **NPC library** (GM): templates and multiple copies for groups of monsters; players only see the NPCs in the scene,
   and only their public information.
 - Session log, paginated Markdown **private notebooks** for each player.
+- **Polls** for the whole campaign or chosen players: one or several answers, anonymous or not, results live.
 
 **Images**
 - Manual crop on import (portraits, item illustrations).
@@ -100,7 +108,7 @@ flowchart LR
     P["GitHub Pages<br/>(or Cloudflare Pages)"]
   end
   subgraph Appwrite server
-    T[("TablesDB<br/>24 tables")]
+    T[("TablesDB<br/>28 tables")]
     S[("Storage<br/>portraits, maps…")]
     F["Node 22 Functions<br/>admin · roll-dice · player-action<br/>apply-visibility · redeem-invite<br/>guard-signup · image-search"]
     R(("Realtime<br/>WebSocket"))
@@ -291,7 +299,7 @@ serves the new version. Cloudflare applies `web/_headers` (security and cache he
 node tests/e2e.mjs
 ```
 
-This test creates throwaway accounts (admin, player), checks 39 rules (permissions, invitations, dice, inventory,
+This test creates throwaway accounts (admin, player), checks 54 rules (permissions, invitations, dice, inventory,
 NPCs, image search…), then deletes everything it created. It uses the Appwrite CLI signed in at step 5.
 
 ---

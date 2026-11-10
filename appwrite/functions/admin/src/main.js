@@ -136,6 +136,12 @@ export default async ({ req, res, log, error }) => {
           if (b.sheetLayout.length > 60000) return fail(res, 400, 'Disposition trop lourde.');
           data.sheetLayout = b.sheetLayout;
         }
+        if (Array.isArray(b.loreCategories)) {   // lore categories: [{ name, color }]
+          const seen = new Set();
+          const clean = b.loreCategories.slice(0, 60).map(x => ({ name: String(x.name || '').trim().slice(0, 64), color: /^#[0-9a-fA-F]{3,8}$/.test(x.color || '') ? x.color : '#8d6b9a' }))
+            .filter(x => x.name && !seen.has(x.name.toLowerCase()) && seen.add(x.name.toLowerCase()));
+          data.loreCategories = JSON.stringify(clean);
+        }
         if (Array.isArray(b.equipSlots)) {   // equipment spots: [{ id, label, type, view, x, y, cap }]
           const clean = b.equipSlots.slice(0, 200).map(s => ({ id: String(s.id).slice(0, 64), label: String(s.label || '').slice(0, 64), type: String(s.type || '').slice(0, 64),
             view: s.view === 'back' ? 'back' : 'front', x: Math.round(+s.x || 0), y: Math.round(+s.y || 0), cap: Math.max(1, Math.min(20, Math.round(+s.cap || 1))) })).filter(s => s.id && s.type);
@@ -180,6 +186,45 @@ export default async ({ req, res, log, error }) => {
         const rolls = await listAll('dice_rolls', [Query.equal('campaignId', c)]);
         for (const r of rolls) await db.deleteRow(T('dice_rolls', { rowId: r.$id })).catch(() => {});
         return res.json({ ok: true, deleted: rolls.length });
+      }
+      case 'pollSave': {
+        // create a poll, or change an existing one (question / audience / closed; options only while nobody voted)
+        const c = String(b.campaignId);
+        await needGm(c);
+        const members = (await teams.listMemberships({ teamId: c, queries: [Query.limit(100)] })).memberships;
+        const audience = [...new Set((Array.isArray(b.audience) ? b.audience : []).map(String))].filter(id => members.some(m => m.userId === id)).slice(0, 100);
+        const gm = Role.team(c, 'gm');
+        const permissions = [Permission.read(gm), Permission.update(gm), Permission.delete(gm),
+          ...(audience.length ? audience.map(id => Permission.read(Role.user(id))) : [Permission.read(Role.team(c))])];
+        const old = b.pollId ? await db.getRow(T('polls', { rowId: String(b.pollId) })).catch(() => null) : null;
+        if (b.pollId && (!old || old.campaignId !== c)) return fail(res, 404, 'Sondage introuvable.');
+        const question = String(b.question ?? old?.question ?? '').trim().slice(0, 255);
+        if (!question) return fail(res, 400, 'Question requise.');
+        let options = old ? JSON.parse(old.options || '[]') : [];
+        const voted = old ? (JSON.parse(old.tally || '{}').voters || 0) > 0 : false;
+        if (Array.isArray(b.options) && !voted) {
+          options = b.options.map(x => String(x).trim().slice(0, 120)).filter(Boolean).slice(0, 20).map((label, i) => ({ id: 'o' + (i + 1), label }));
+          if (options.length < 2) return fail(res, 400, 'Au moins deux réponses.');
+        }
+        const data = { campaignId: c, question, options: JSON.stringify(options), audience: JSON.stringify(audience),
+          multi: typeof b.multi === 'boolean' ? b.multi : !!old?.multi, anonymous: typeof b.anonymous === 'boolean' && !voted ? b.anonymous : !!old?.anonymous,
+          closed: typeof b.closed === 'boolean' ? b.closed : !!old?.closed };
+        const row = old ? await db.updateRow(T('polls', { rowId: old.$id, data, permissions }))
+          : await db.createRow(T('polls', { rowId: ID.unique(), data: { ...data, tally: '{}' }, permissions }));
+        return res.json({ ok: true, id: row.$id });
+      }
+      case 'pollDelete': {
+        const p = await db.getRow(T('polls', { rowId: String(b.pollId) })).catch(() => null);
+        if (!p) return fail(res, 404, 'Sondage introuvable.');
+        await needGm(p.campaignId);
+        let n = 0;
+        for (;;) {
+          const votes = (await db.listRows(T('poll_votes', { queries: [Query.equal('pollId', p.$id), Query.limit(100)] }))).rows;
+          if (!votes.length) break;
+          for (const v of votes) { await db.deleteRow(T('poll_votes', { rowId: v.$id })); n++; }
+        }
+        await db.deleteRow(T('polls', { rowId: p.$id }));
+        return res.json({ ok: true, votes: n });
       }
       case 'listMembers': {
         const c = String(b.campaignId);

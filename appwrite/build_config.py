@@ -56,7 +56,7 @@ TABLES = [
     ('campaigns', 'Campagnes', True, perms(read=[ADMIN], create=[ADMIN], update=[ADMIN], delete=[ADMIN]),
      [vc('name', 128, True), vc('gmUserId', 36), vc('description', 1000), it('sessionNo', 0, None, 0), vc('sessionName', 128),
       vc('accent', 16), it('diceMs', 1000, 10000, 5000), en('defaultVisibility', ['gm', 'owner', 'all'], 'all'),
-      bl('allowPlayerLayout', True), bl('archived'), tx('equipSlots'), tx('sheetLayout'), vc('rollStat', 128), vc('rollSkill', 128), tx('initiative'), tx('reveal')], []),
+      bl('allowPlayerLayout', True), bl('archived'), tx('equipSlots'), tx('sheetLayout'), vc('rollStat', 128), vc('rollSkill', 128), tx('initiative'), tx('reveal'), tx('loreCategories')], []),
     ('profiles', 'Profils', True, perms(read=[USERS], create=[ADMIN], update=[ADMIN], delete=[ADMIN]),
      [vc('userId', 36, True), vc('username', 64, True), vc('color', 16)], [ix('u_user', ['userId'], 'unique')]),
     # server-wide settings, one row 'global' (interface language): readable before sign-in, written by the admin only
@@ -87,7 +87,7 @@ TABLES = [
      [ix('k_char', ['characterId']), ix('k_campaign', ['campaignId'])]),
     ('item_defs', 'Catalogue d’objets', True, CAMPAIGN,
      [CAMP(), vc('name', 128, True), vc('type', 64), en('rarity', ['common', 'uncommon', 'rare', 'epic', 'legend'], 'common'),
-      vc('valueLabel', 64), tx('description'), vc('art', 32), vc('artFileId', 36), vc('slot', 64)], [ix('k_campaign', ['campaignId'])]),
+      vc('valueLabel', 64), tx('description'), vc('art', 32), vc('artFileId', 36), vc('slot', 64), vc('modifiers', 500)], [ix('k_campaign', ['campaignId'])]),
     ('item_instances', 'Objets possédés', True, CAMPAIGN,
      [CAMP(), vc('itemDefId', 36, True), vc('characterId', 36, True), it('qty', 0, None, 1), VIS(), bl('hiddenFromPlayers'), vc('equippedSlot', 64)],
      [ix('k_char', ['characterId']), ix('k_campaign', ['campaignId'])]),
@@ -105,6 +105,19 @@ TABLES = [
     ('map_texts', 'Textes de carte', True, CAMPAIGN,
      [CAMP(), vc('mapId', 36, True), it('x'), it('y'), vc('text', 255), it('size', 6, 200, 32), vc('color', 16), it('rotation', -180, 180, 0), VIS()],
      [ix('k_map', ['mapId']), ix('k_campaign', ['campaignId'])]),
+    # drawings and pings on maps, by anyone in the campaign; created by player-action (read: campaign; delete: author + GM)
+    ('map_marks', 'Dessins et pings', True, perms(**ADMIN_ALL),
+     [CAMP(), vc('mapId', 36, True), en('kind', ['draw', 'ping'], 'draw'), tx('points'), vc('color', 16), it('width', 1, 60, 4),
+      vc('authorId', 36), vc('authorName', 64)], [ix('k_map', ['mapId']), ix('k_campaign', ['campaignId'])]),
+    # comments under lore articles, by anyone who can read the article; created by player-action (read: like the article; delete: author + GM)
+    ('lore_comments', 'Commentaires du lore', True, perms(**ADMIN_ALL),
+     [CAMP(), vc('articleId', 36, True), tx('body'), vc('authorId', 36), vc('authorName', 64)], [ix('k_article', ['articleId']), ix('k_campaign', ['campaignId'])]),
+    # polls (GM): readable by the GMs and the chosen players (or the whole campaign); written by the admin Function
+    ('polls', 'Sondages', True, perms(**ADMIN_ALL),
+     [CAMP(), vc('question', 255, True), tx('options'), tx('audience'), bl('multi'), bl('anonymous'), bl('closed'), tx('tally')], [ix('k_campaign', ['campaignId'])]),
+    # one vote per person and poll, written by player-action; read by the voter (and the GMs unless the poll is anonymous)
+    ('poll_votes', 'Votes', True, perms(**ADMIN_ALL),
+     [CAMP(), vc('pollId', 36, True), vc('userId', 36), vc('userName', 64), tx('choices')], [ix('k_campaign', ['campaignId']), ix('k_poll', ['pollId'])]),
     ('gm_notes', 'Notes MJ', True, CAMPAIGN, [CAMP(), vc('entityType', 32, True), vc('entityId', 36, True), tx('body')],
      [ix('u_entity', ['entityType', 'entityId'], 'unique'), ix('k_campaign', ['campaignId'])]),
     # sheet templates shared by every user (fields + layout of a campaign sheet); the creator owns the row

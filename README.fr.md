@@ -41,27 +41,35 @@ backend.
   statistiques à cadrans, état physique (silhouette, organes, crâne) avec blessures localisées, notes, informations.
 - **Modèles de fiche** partagés entre tous les utilisateurs du serveur.
 - Visibilité par champ : *tous*, *MJ + propriétaire* ou *MJ seul*, appliquée côté serveur.
+- Les joueurs modifient leurs statistiques et informations, et consultent la fiche, l'inventaire et l'équipement des
+  autres joueurs (champs publics) ; chacun peut réorganiser sa fiche et enregistrer ou reprendre des dispositions.
 - Historique des modifications consultable par le MJ.
 
 **Inventaire, équipement, compétences**
 - Bibliothèque d'objets et de compétences par campagne, avec recherche, filtres et tri, import / export sans
   doublons.
 - Objets empilables, raretés, objets cachés aux joueurs, don d'objets entre personnages, utilisation d'une unité.
-- Onglet **Équipement** : vue anatomique avec emplacements (tête, corps, doigts, oreilles…), capacités modifiables
+- **Modificateurs** d'objets (`FOR+2, AGI-1`) appliqués une fois équipés, jets compris.
+- Onglet **Équipement** : statistiques avec les bonus de l'équipement au-dessus de la vue anatomique ; objets équipables
+  en dessous, filtrés par l'emplacement cliqué ; emplacements (tête, corps, doigts, oreilles…), capacités modifiables
   et emplacements personnalisés.
 
 **Monde**
-- **Lore** : articles en Markdown avec images, articles secrets, recherche avancée (`"phrase exacte"`, `-exclure`).
-- **Cartes** : import d'image, points d'intérêt reliés au lore, textes, **brouillard de guerre** dévoilé par le MJ.
+- **Lore** : articles en Markdown (images, tableaux) en liste ou en grille, catégories colorées, articles secrets,
+  recherche avancée (`"phrase exacte"`, `-exclure`), commentaires sous les articles.
+- **Cartes** : import d'image, points d'intérêt reliés au lore, textes, **brouillard de guerre** choisi par carte,
+  dévoilé ou recouvert au pinceau par le MJ ; mesure (à l'échelle de la carte), dessin et ping, partagés en direct.
 - Révélations : le MJ pousse une image ou un texte à l'écran des joueurs.
 
 **À la table**
-- **Lanceur de dés** partagé en temps réel : formules (`(2d6+1d8-4)*2`), lancers nommés, lancers secrets,
+- **Lanceur de dés** partagé en temps réel : formules (`(2d6+1d8-4)*2`), alias de statistiques (`(2d6+AGI)*FOR`),
+  jet au clic sur une statistique ou une compétence (formule propre si besoin), lancers nommés, lancers secrets,
   journal identique pour tous, effaçable par le MJ.
 - **Barre de scène** : portraits des personnages et PNJ présents, ordre de jeu réorganisable, tour en cours.
 - **Bibliothèque de PNJ** (MJ) : modèles, exemplaires multiples pour les groupes de monstres ; les joueurs ne voient
   que les PNJ présents dans la scène, et seulement leurs informations publiques.
 - Journal de séances, **carnets privés** paginés en Markdown pour chaque joueur.
+- **Sondages** pour toute la campagne ou des joueurs choisis : un ou plusieurs choix, anonymes ou non, résultats en direct.
 
 **Images**
 - Recadrage manuel à l'import (portraits, illustrations d'objets).
@@ -107,7 +115,7 @@ flowchart LR
     P["GitHub Pages<br/>(ou Cloudflare Pages)"]
   end
   subgraph Serveur Appwrite
-    T[("TablesDB<br/>24 tables")]
+    T[("TablesDB<br/>28 tables")]
     S[("Storage<br/>portraits, cartes…")]
     F["Functions Node 22<br/>admin · roll-dice · player-action<br/>apply-visibility · redeem-invite<br/>guard-signup · image-search"]
     R(("Realtime<br/>WebSocket"))
@@ -299,7 +307,7 @@ serve la nouvelle version. Cloudflare applique `web/_headers` (en-têtes de séc
 node tests/e2e.mjs
 ```
 
-Ce test crée des comptes jetables (admin, joueur), vérifie 39 règles (permissions, invitations, dés,
+Ce test crée des comptes jetables (admin, joueur), vérifie 54 règles (permissions, invitations, dés,
 inventaire, PNJ, recherche d'images…) puis supprime tout ce qu'il a créé. Il utilise la CLI Appwrite connectée à
 l'étape 5.
 

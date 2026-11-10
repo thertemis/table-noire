@@ -8,7 +8,7 @@ lanceur de dés partagé en temps réel. Plusieurs campagnes indépendantes, cha
 ```
 Navigateur (PWA)                               Serveur (Docker)
 app.example.com ── GitHub / Cloudflare Pages ─┐   appwrite.example.com ── proxy HTTPS ── Appwrite
-  web/ : HTML + JS, sans build                │     TablesDB (24 tables) · Storage (5 buckets)
+  web/ : HTML + JS, sans build                │     TablesDB (28 tables) · Storage (5 buckets)
   service worker (hors ligne)                 └───► Functions Node 22 (7) · Realtime (WebSocket)
 ```
 
@@ -46,6 +46,7 @@ app.example.com ── GitHub / Cloudflare Pages ─┐   appwrite.example.com �
 | MJ | `gm_notes` (notes MJ des blessures, objets, compétences), `session_log`, `change_log` |
 | Jeu | `dice_rolls` (journal de dés, jets secrets) |
 | Partagé | `sheet_templates` (modèles de fiche, lisibles par tous les utilisateurs) |
+| Interaction | `map_marks` (dessins et pings), `lore_comments`, `polls`, `poll_votes` : créés par les Functions, qui posent les permissions (auteur + MJ) |
 | Serveur | `app_settings` (ligne `global` : langue de l’interface `auto`/`fr`/`en`, lisible sans compte, modifiable par l’admin) |
 | Joueur | `notebook_pages` (carnet privé : lisible par son auteur seulement) |
 

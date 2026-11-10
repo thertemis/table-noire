@@ -79,6 +79,16 @@ eqCss.textContent = `
 .eq-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .eq-list li{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;background:#22201c;font-size:12.5px}
 .eq-list li .grow{flex:1}
+.eq-stats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.eq-stat{display:flex;flex-direction:column;align-items:center;min-width:74px;padding:7px 10px;border-radius:8px;background:#22201c;box-shadow:inset 0 1px 0 rgba(255,240,215,.05)}
+.eq-stat b{font:600 20px/1.1 var(--f-mono);color:var(--cream)}
+.eq-stat small{font:400 9.5px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.eq-stat i{font:500 11px var(--f-mono);font-style:normal}
+.eq-stat i.up{color:var(--olive)} .eq-stat i.down{color:var(--rust)}
+.mods{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 0}
+.mods span{font:600 10px/1 var(--f-mono);padding:3px 5px;border-radius:3px;background:rgba(15,13,11,.55);color:#efe7d6}
+.mods span.up{color:#b9d47f} .mods span.down{color:#f0927c}
+.eq-filter{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 @media (max-width:900px){.equip{grid-template-columns:1fr}}`;
 document.head.appendChild(eqCss);
 const eqTip = Object.assign(document.createElement('div'), { id: 'eqTip' });
@@ -113,7 +123,8 @@ itemForm = function (def) {
   const desc = $('#itemForm textarea[name="desc"]')?.closest('label'); if (!desc) return;
   const cur = (def && def.slot) || '';
   desc.insertAdjacentHTML('beforebegin', `<label class="full">S’équipe sur<select class="field" name="slot"><option value="">Ne s’équipe pas</option>${Object.entries(slotTypes())
-    .map(([k, l]) => `<option value="${esc(k)}" ${k === cur ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`);
+    .map(([k, l]) => `<option value="${esc(k)}" ${k === cur ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+    <label class="full">Modificateurs une fois équipé<input class="field" name="mods" value="${esc((def && def.mods) || '')}" maxlength="500" placeholder="ex. FOR+2, AGI-1" spellcheck="false"></label>`);
 };
 
 ACT.qty = d => {
@@ -178,10 +189,11 @@ function renderEquipment() {
   if (lost.length) groups.push(['Emplacement supprimé', '', lost]);
   return `<div class="toolbar"><div><h2>Équipement · ${name}</h2><div class="sub">Ce que ${name} porte sur lui, et où.</div></div><span class="grow"></span>
     ${isMJ() ? `<button class="btn ${EQ.edit ? 'on' : ''}" data-act="slotEdit">${ic('edit')}${EQ.edit ? 'Terminer' : 'Emplacements'}</button>${EQ.edit ? `<button class="btn" data-act="slotReset">Emplacements par défaut</button>` : ''}` : ''}</div>
+    ${eqStatsHtml()}
     <div class="equip"><div class="sheet"><div class="sheet-head"><b>Fiche d’équipement</b><span>Sujet : ${name}</span></div>
       <div class="plates corps">${eqPlate('front', 'assets/body-front.png', 'Face antérieure')}${eqPlate('back', 'assets/body-back.png', 'Face postérieure')}</div></div>
       <div class="side well" id="eqSide">${eqSide()}</div></div>
-    <div class="eq-groups">${groups.length ? groups.map(([l, c, list]) => `<section class="eq-group"><h3>${esc(l)} <small>${c}</small></h3>
+    <div class="eq-groups">${eqEquippableHtml()}${groups.length ? groups.map(([l, c, list]) => `<section class="eq-group"><h3>${esc(l)} <small>${c}</small></h3>
       <div class="cards">${list.map(o => { const d = defOf(o); return d ? cardHtml(d, o, false) : ''; }).join('')}</div></section>`).join('')
       : `<div class="empty-note well">Rien d’équipé pour l’instant. Retourne une carte dans l’inventaire et choisis « Équiper ».</div>`}</div>`;
 }
@@ -252,3 +264,48 @@ async function saveSlots(list) {
   } catch (e) { toast('Enregistrement impossible : ' + errMsg(e)); }
   render();
 }
+
+/* ---------------------------------------------------------------- stat modifiers of equipped items
+   An item's "modifiers" text ("FOR+2, AGI-1") is read against the sheet's stats (abbreviation, English abbreviation or
+   name). The equipped items of the open character add up; the equipment tab shows base, bonus and effective value,
+   and rolls (stat click, aliases in formulas) use the effective value. */
+function parseMods(text) {
+  const out = {};
+  const find = k => (C.stats || []).find(s => [s.abbr, tr(s.abbr), s.name, tr(s.name)].some(x => x && x.toUpperCase() === k.toUpperCase()));
+  for (const m of String(text || '').matchAll(/([A-Za-zÀ-ÿ_]+)\s*([+-]\s*\d+)/g)) {
+    const s = find(m[1]); if (!s) continue;
+    out[s.abbr] = (out[s.abbr] || 0) + parseInt(m[2].replace(/\s+/g, ''), 10);
+  }
+  return out;
+}
+function equippedMods() {
+  const tot = {};
+  if (typeof IV === 'undefined' || IV.charId !== SH.charId) return tot;
+  for (const o of INV) { if (!o.slot || !ownVisible(o)) continue; const d = defOf(o); if (!d || !d.mods) continue;
+    for (const [k, v] of Object.entries(parseMods(d.mods))) tot[k] = (tot[k] || 0) + v; }
+  return tot;
+}
+/** Value of a stat with the bonuses of the equipped items. */
+const effStat = s => (+s.value || 0) + (equippedMods()[s.abbr] || 0);
+const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + Math.abs(n);
+function eqStatsHtml() {
+  const mods = equippedMods(), stats = (C.stats || []).filter(s => canSee(s.vis));
+  if (!stats.length) return '';
+  return `<div class="eq-stats" aria-label="Statistiques avec l’équipement">${stats.map(s => { const m = mods[s.abbr] || 0;
+    return `<div class="eq-stat" title="${esc(s.name)} : ${s.value}${m ? ' ' + signed(m) + ' (équipement)' : ''}"><small>${esc(s.abbr)}</small><b>${(+s.value || 0) + m}</b>${m ? `<i class="${m > 0 ? 'up' : 'down'}">${signed(m)}</i>` : '<i>&nbsp;</i>'}</div>`; }).join('')}</div>`;
+}
+function eqEquippableHtml() {
+  const sel = EQ.sel && slotById(EQ.sel);
+  const list = INV.filter(o => !o.slot && ownVisible(o) && defOf(o)?.slot && (!sel || defOf(o).slot === sel.type));
+  return `<section class="eq-group"><h3>Objets équipables <small>${list.length}</small></h3>
+    ${sel ? `<div class="eq-filter"><span class="chip">Pour : ${esc(sel.label)} (${esc(typeLabel(sel.type))})</span><button class="btn xs" data-act="eqSel" data-id="">Tous les emplacements</button></div>` : ''}
+    ${list.length ? `<div class="cards">${list.map(o => cardHtml(defOf(o), o, false)).join('')}</div>` : `<p class="hint" style="margin:0">${sel ? 'Aucun objet de l’inventaire ne va sur cet emplacement.' : 'Aucun objet équipable dans l’inventaire.'}</p>`}</section>`;
+}
+// cards show their modifiers
+const _cardHtmlMods = cardHtml;
+cardHtml = function (def, own, lib) {
+  const html = _cardHtmlMods(def, own, lib);
+  if (!def || !def.mods) return html;
+  const m = parseMods(def.mods), chips = Object.entries(m).map(([k, v]) => `<span class="${v > 0 ? 'up' : 'down'}">${esc(k)} ${signed(v)}</span>`).join('');
+  return chips ? html.replace('<div class="c-desc">', `<div class="mods" title="Une fois équipé">${chips}</div><div class="c-desc">`) : html;
+};

@@ -58,7 +58,8 @@ render = function () {
 document.addEventListener('click', e => {
   const d = e.target.closest && e.target.closest('.dial[data-roll-stat]'); if (!d) return;
   const s = C.stats.find(x => x.id === d.dataset.rollStat); if (!s) return;
-  sheetRoll(`${s.name}`, rollFormula(s.roll || SETTINGS.rollStat, { val: s.value, mod: modOf(s.value) }));
+  const v = typeof effStat === 'function' ? effStat(s) : s.value;   // with the equipped items' bonuses
+  sheetRoll(`${s.name}`, rollFormula(s.roll || SETTINGS.rollStat, { val: v, mod: modOf(v) }));
 });
 document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.dial[data-roll-stat]')) { e.preventDefault(); e.target.click(); } });
 
@@ -80,7 +81,7 @@ ACT.rollSkill = d => {
    e.g. (2d6+AGI)*FOR. Dice ("d6", "2d20", "d%") are not aliases. */
 function withAliases(src) {
   const map = new Map();
-  for (const s of C.stats || []) for (const k of [s.abbr, tr(s.abbr), s.name, tr(s.name)]) if (k && /^[A-Za-zÀ-ÿ_]+$/.test(k)) map.set(k.toUpperCase(), +s.value || 0);
+  for (const s of C.stats || []) for (const k of [s.abbr, tr(s.abbr), s.name, tr(s.name)]) if (k && /^[A-Za-zÀ-ÿ_]+$/.test(k)) map.set(k.toUpperCase(), typeof effStat === 'function' ? effStat(s) : +s.value || 0);
   return String(src).replace(/(?<![A-Za-z0-9_À-ÿ])([A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ_0-9]*)/g, (m, id) => {
     if (/^d(\d*|%)$/i.test(id)) return m;
     const v = map.get(id.toUpperCase());

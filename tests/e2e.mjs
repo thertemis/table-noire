@@ -187,6 +187,31 @@ try {
   const pw2 = await api(player, 'PATCH', `/tablesdb/${DB}/tables/app_settings/rows/global`, { data: { lang: 'fr' } });
   check('a player cannot change the server language', pw1.status >= 400 && pw2.status >= 400, `${pw1.status}/${pw2.status}`);
 
+  // lore comments: only on articles the player can read; the GM-only ones refuse them
+  const pubArt = await row(admin, 'lore_articles', { campaignId: camp, title: 'Public', bodyMd: 'x', visibility: 'all' });
+  const gmArt = await row(admin, 'lore_articles', { campaignId: camp, title: 'Secret', bodyMd: 'x', visibility: 'gm' });
+  const com = await fn(player, 'player-action', { action: 'comment', articleId: pubArt.$id, body: 'Bonjour' });
+  check('a player comments a public lore article', com.ok, com.message);
+  check('a player cannot comment a GM-only article', (await fn(player, 'player-action', { action: 'comment', articleId: gmArt.$id, body: 'x' })).ok === false);
+
+  // polls: one vote per person, changeable while open; audience, anonymity and closing enforced by the server
+  const pAll = await fn(admin, 'admin', { action: 'pollSave', campaignId: camp, question: 'Samedi ?', options: ['Oui', 'Non'], audience: [] });
+  const v1 = await fn(player, 'player-action', { action: 'vote', pollId: pAll.id, choices: ['o1'] });
+  const v2 = await fn(player, 'player-action', { action: 'vote', pollId: pAll.id, choices: ['o2'] });
+  check('a player votes and changes their vote (one vote counted)', v1.ok && v2.ok && v2.tally.voters === 1 && v2.tally.counts.o2 === 1 && !v2.tally.counts.o1, JSON.stringify(v2.tally));
+  check('one answer only on a single-choice poll', (await fn(player, 'player-action', { action: 'vote', pollId: pAll.id, choices: ['o1', 'o2'] })).ok === false);
+  const pGm = await fn(admin, 'admin', { action: 'pollSave', campaignId: camp, question: 'MJ seul', options: ['A', 'B'], audience: [ADMIN_ID] });
+  check('a poll for other people is invisible to the player and refuses their vote', !(await list(player, 'polls', q('equal', 'campaignId', [camp]))).some(x => x.$id === pGm.id)
+    && (await fn(player, 'player-action', { action: 'vote', pollId: pGm.id, choices: ['o1'] })).ok === false);
+  const pAnon = await fn(admin, 'admin', { action: 'pollSave', campaignId: camp, question: 'Anonyme', options: ['A', 'B'], anonymous: true, audience: [] });
+  await fn(player, 'player-action', { action: 'vote', pollId: pAnon.id, choices: ['o1'] });
+  const anonRows = await list(admin, 'poll_votes', q('equal', 'pollId', [pAnon.id]));
+  check('an anonymous vote carries no identity', anonRows.length === 1 && !anonRows[0].userId && !anonRows[0].userName, JSON.stringify(anonRows.map(r => [r.userId, r.userName])));
+  check('the player reads their own anonymous vote', (await list(player, 'poll_votes', q('equal', 'pollId', [pAnon.id]))).length === 1);
+  await fn(admin, 'admin', { action: 'pollSave', campaignId: camp, pollId: pAll.id, closed: true, audience: [] });
+  check('a closed poll refuses votes', (await fn(player, 'player-action', { action: 'vote', pollId: pAll.id, choices: ['o1'] })).ok === false);
+  check('a player cannot delete a poll', (await fn(player, 'admin', { action: 'pollDelete', pollId: pAll.id })).ok === false);
+
   // online image search (server-side: Pixabay key and DuckDuckGo never reach the browser)
   check('image search needs a session', (await fn(null, 'image-search', { action: 'search', source: 'ddg', q: 'chat' })).ok === false);
   const lan = await fn(player, 'image-search', { action: 'fetch', url: 'http://192.168.1.1/a.jpg' });

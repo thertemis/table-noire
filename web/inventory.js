@@ -37,7 +37,7 @@ async function loadInventory(charId, quiet = false) {
     const note = (t, id) => (IV.notes.get(t + ':' + id) || {}).body || '';
     const byName = (a, b) => a.name.localeCompare(b.name, 'fr');
     ITEMS.splice(0, ITEMS.length, ...defs.map(r => ({ id: r.$id, name: r.name, type: r.type || '', rarity: r.rarity || 'common',
-      value: r.valueLabel || '', art: r.art || 'photo', img: r.artFileId ? artUrl(r.artFileId) : '', fileId: r.artFileId || '', slot: r.slot || '',
+      value: r.valueLabel || '', art: r.art || 'photo', img: r.artFileId ? artUrl(r.artFileId) : '', fileId: r.artFileId || '', slot: r.slot || '', mods: r.modifiers || '',
       desc: r.description || '', mj: note('item_def', r.$id) })).sort(byName));
     if (sdefs.length) IV.skillFormula = 'formula' in sdefs[0];   // the column was added later: older servers do not have it
     SKILLS.splice(0, SKILLS.length, ...sdefs.map(r => ({ id: r.$id, name: r.name, stat: statAbbr(r.statFieldId), level: r.defaultLevel || 1, roll: r.formula || '',
@@ -146,7 +146,7 @@ async function syncOwned(tableId, list, store, defKey, extra, tracked = () => ({
 async function pushInvGm(prev) {
   await syncDefs('item_defs', 'item_def', ITEMS, prev.ITEMS, IV.defs, x => ({ name: String(x.name || 'Objet').slice(0, 128), type: String(x.type || '').slice(0, 64),
     rarity: x.rarity || 'common', valueLabel: String(x.value || '').slice(0, 64), description: x.desc || '', art: x.art || 'photo',
-    artFileId: x.img ? (x.fileId || '') : '', slot: String(x.slot || '').slice(0, 64) }), 'item_instances', 'itemDefId');
+    artFileId: x.img ? (x.fileId || '') : '', slot: String(x.slot || '').slice(0, 64), modifiers: String(x.mods || '').slice(0, 500) }), 'item_instances', 'itemDefId');
   for (const x of ITEMS) if (!x.img) x.fileId = '';
   await syncDefs('skill_defs', 'skill_def', SKILLS, prev.SKILLS, IV.sdefs, x => ({ name: String(x.name || 'Compétence').slice(0, 128),
     statFieldId: statField(x.stat), defaultLevel: Math.max(1, Math.min(5, +x.level || 1)), description: x.desc || '', ...(IV.skillFormula ? { formula: String(x.roll || '').slice(0, 128) } : {}) }), 'skill_instances', 'skillDefId');

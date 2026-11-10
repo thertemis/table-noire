@@ -51,6 +51,8 @@ chargé est donc la couche la plus externe. Les modules communiquent aussi par l
 | 22 | `library.js` | export / import de bibliothèques | idem |
 | 23 | `notebook.js` | onglet Carnet (carnet de notes privé, paginé) | `renderMap` (route) |
 | 24 | `npc.js` | bibliothèque de PNJ, exemplaires, barre de scène | `renderIniBar`, `saveIni`, `renderHeader`, `renderMap` (route) |
+| 24b | `lore.js` | page Lore : vue liste / grille, catégories (MJ), article avec titre, tableaux, commentaires | `renderLore` (remplacé), `newLore`, `deleteLore` |
+| 24c | `polls.js` | sondages : création (MJ, public choisi), vote, résultats, fermeture | `renderHeader`, `gmHub` |
 | 25 | `images.js` | recadrage des images importées, recherche d'images en onglets Wikimedia / Pixabay / DuckDuckGo | `readImage`, `tIdentity`, `itemForm` |
 | 26 | `stable.js` | anti-scintillement (dernier), vérification des modules | `render` |
 | 27 | `sw-register.js` | service worker (`sw.js`) | |
