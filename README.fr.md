@@ -4,7 +4,8 @@
 
 **Compagnon de jeu de rôle multi-campagne, en temps réel, pour le MJ et ses joueurs.**
 Fiches de personnage modulaires, inventaire et équipement, compétences, lore en Markdown, cartes avec brouillard
-de guerre, lanceur de dés partagé, PNJ et ordre de jeu, carnets privés. Une application web installable (PWA),
+de guerre, lanceur de dés partagé, PNJ et ordre de jeu, sondages, carnets privés, et une série de widgets « fidget »
+pour s'occuper les mains entre deux jets. Une application web installable (PWA),
 sans étape de build, hébergée gratuitement sur GitHub Pages, avec un serveur [Appwrite](https://appwrite.io) comme
 backend.
 
@@ -25,7 +26,6 @@ backend.
 7. [Développement](#développement)
 8. [Sécurité](#sécurité)
 9. [Dépannage](#dépannage)
-10. [Et Supabase ?](#et-supabase-)
 
 ---
 
@@ -43,6 +43,10 @@ backend.
 - Visibilité par champ : *tous*, *MJ + propriétaire* ou *MJ seul*, appliquée côté serveur.
 - Les joueurs modifient leurs statistiques et informations, et consultent la fiche, l'inventaire et l'équipement des
   autres joueurs (champs publics) ; chacun peut réorganiser sa fiche et enregistrer ou reprendre des dispositions.
+- Le MJ peut **verrouiller** une statistique ou une information : le joueur la voit mais ne peut plus la modifier
+  (vérifié aussi par le serveur).
+- Prénom, nom et un **alias** facultatif : le joueur choisit d'afficher l'alias à la place de son nom sur la fiche,
+  dans la scène et dans le journal des dés.
 - Historique des modifications consultable par le MJ.
 
 **Inventaire, équipement, compétences**
@@ -57,20 +61,36 @@ backend.
 **Monde**
 - **Lore** : articles en Markdown (images, tableaux) en liste ou en grille, catégories colorées, articles secrets,
   recherche avancée (`"phrase exacte"`, `-exclure`), commentaires sous les articles.
-- **Cartes** : import d'image, points d'intérêt reliés au lore, textes, **brouillard de guerre** choisi par carte,
-  dévoilé ou recouvert au pinceau par le MJ (diamètre en pixels de la carte) ; les joueurs ne téléchargent qu’une copie
-  masquée d’une carte sous brouillard, les zones cachées sont donc irrécupérables depuis le navigateur ; mesure (à l'échelle de la carte), dessin et ping, partagés en direct.
+- Les commentaires suivent leur article : quand un article devient secret, ses commentaires aussi.
+- **Cartes** : import d'image, points d'intérêt reliés au lore, textes, mesure (à l'échelle de la carte), dessin et
+  ping, partagés en direct avec toute la table.
+- **Brouillard de guerre** choisi par carte, dévoilé ou recouvert au pinceau par le MJ, avec une taille de pinceau en
+  pixels de la carte (curseur, nombre ou touches `[` / `]`) et un contour qui montre exactement la zone peinte.
+  **Anti-triche** : sous brouillard, les joueurs ne téléchargent jamais l'image d'origine, seulement une copie masquée
+  dessinée par l'appli du MJ ; les zones cachées n'arrivent jamais dans leur navigateur.
 - Révélations : le MJ pousse une image ou un texte à l'écran des joueurs.
 
 **À la table**
 - **Lanceur de dés** partagé en temps réel : formules (`(2d6+1d8-4)*2`), alias de statistiques (`(2d6+AGI)*FOR`),
   jet au clic sur une statistique ou une compétence (formule propre si besoin), lancers nommés, lancers secrets,
   journal identique pour tous, effaçable par le MJ.
-- **Barre de scène** : portraits des personnages et PNJ présents, ordre de jeu réorganisable, tour en cours.
+- **Qui lance** : un jet appartient à l'utilisateur connecté, pas à la fiche affichée. Un joueur qui a plusieurs
+  personnages choisit lequel ; le MJ lance en « MJ », au nom d'un PNJ de la scène ou sous un nom libre.
+- **Barre de scène** : portraits des personnages et PNJ présents (noms et portraits mis à jour en direct), ordre de
+  jeu réorganisable, tour en cours ; un clic sur un portrait ouvre la fiche du personnage.
 - **Bibliothèque de PNJ** (MJ) : modèles, exemplaires multiples pour les groupes de monstres ; les joueurs ne voient
   que les PNJ présents dans la scène, et seulement leurs informations publiques.
 - Journal de séances, **carnets privés** paginés en Markdown pour chaque joueur.
-- **Sondages** pour toute la campagne ou des joueurs choisis : un ou plusieurs choix, anonymes ou non, résultats en direct.
+- **Sondages** pour toute la campagne ou des joueurs choisis : un ou plusieurs choix, anonymes ou non, résultats en
+  direct ; le MJ peut modifier un sondage (les réponses sont figées dès qu'un vote existe), le clore ou le supprimer.
+
+**Widgets « fidget »**
+- Des tuiles pour occuper les mains impatientes, posées sur la fiche comme les autres : hand spinner (avec record de
+  vitesse), pads musicaux, *Bip* l'animal de poche à nourrir et faire jouer, ressort, tableau de commande plein
+  d'interrupteurs, de boutons et de potentiomètres, minuteur de tour (compte à rebours ou chronomètre), radar,
+  instruments de mesure avec compteur Geiger, compteurs et oscilloscope.
+- Sons facultatifs (bouton muet par tuile) ; ils ne tournent que sur ton écran. En mode édition de la disposition,
+  la bibliothèque **Widgets** les ajoute ou les retire.
 
 **Images**
 - Recadrage manuel à l'import (portraits, illustrations d'objets).
@@ -90,14 +110,24 @@ backend.
 
 ## Aperçu
 
-| Inventaire | Compétences |
+| Équipement | Sondages |
 |---|---|
+| ![Équipement : statistiques avec bonus, emplacements anatomiques](docs/screenshots/equipement.jpg) | ![Sondages](docs/screenshots/sondages.jpg) |
+| **Brouillard de guerre, vue MJ** (contour du pinceau, brouillard translucide) | **La même carte, vue joueur** (copie masquée) |
+| ![Brouillard, MJ](docs/screenshots/carte-brouillard-mj.jpg) | ![Brouillard, joueur](docs/screenshots/carte-brouillard-joueur.jpg) |
+| **Lore en grille, catégories colorées** | **Widgets « fidget »** |
+| ![Lore en grille](docs/screenshots/lore-grille.jpg) | ![Widgets](docs/screenshots/widgets.jpg) |
+| **Inventaire** | **Compétences** |
 | ![Inventaire](docs/screenshots/inventaire.jpg) | ![Compétences](docs/screenshots/competences.jpg) |
-| **Lore** | **Carte** |
-| ![Lore](docs/screenshots/lore.jpg) | ![Carte](docs/screenshots/carte.jpg) |
 
 <details>
-<summary>Connexion et fiche complète (widgets)</summary>
+<summary>Plus : widgets, article de lore, carte, connexion, fiche complète</summary>
+
+![Autres widgets : spinner, pads, Bip](docs/screenshots/widgets-2.jpg)
+
+![Lore](docs/screenshots/lore.jpg)
+
+![Carte](docs/screenshots/carte.jpg)
 
 ![Connexion](docs/screenshots/login.jpg)
 
@@ -308,7 +338,7 @@ serve la nouvelle version. Cloudflare applique `web/_headers` (en-têtes de séc
 node tests/e2e.mjs
 ```
 
-Ce test crée des comptes jetables (admin, joueur), vérifie 54 règles (permissions, invitations, dés,
+Ce test crée des comptes jetables (admin, joueur), vérifie 58 règles (permissions, invitations, dés,
 inventaire, PNJ, recherche d'images…) puis supprime tout ce qu'il a créé. Il utilise la CLI Appwrite connectée à
 l'étape 5.
 
@@ -405,13 +435,6 @@ docs/           captures d'écran
 | Le workflow Pages ne publie rien (« example values ») | Remplis `tn.config.json`, lance `node tools/configure.mjs`, commite. |
 | L'onglet Pixabay dit « pas configuré » | Ajoute `PIXABAY_KEY` à la Function `image-search` puis redéploie-la. |
 | DuckDuckGo ne répond pas | Pas d'API officielle : DuckDuckGo refuse parfois les requêtes automatiques. Réessaie plus tard ou utilise un autre onglet. |
-
-## Et Supabase ?
-
-Table Noire fonctionne **uniquement avec Appwrite**. Le serveur repose sur des briques propres à Appwrite :
-équipes et rôles, permissions par ligne posées par des Functions déclenchées sur événement, Realtime, Functions
-avec clé temporaire. Un portage vers Supabase (Postgres + RLS, Edge Functions, Realtime) est envisageable, mais il
-n'existe pas aujourd'hui.
 
 ## Licence
 

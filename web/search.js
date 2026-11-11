@@ -99,6 +99,7 @@ function parseQuery(q) {
 }
 // article text without its title heading, images, link targets and Markdown marks (hyphens inside words are kept)
 const plainMd = md => String(md || '').replace(/^\s*#\s+.*$/m, '').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+  .replace(/^[\s|:-]*-{2,}[\s|:-]*$/gm, ' ')
   .replace(/^\s*([-*+]|\d+\.)\s+/gm, ' ').replace(/[#>*_`~|]+/g, ' ').replace(/\s+/g, ' ').trim();
 function loreHits(a, qq, titlesOnly) {
   const title = fold(a.title), body = titlesOnly ? '' : fold(plainMd(a.md)), all = title + ' ' + body;

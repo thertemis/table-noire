@@ -4,7 +4,8 @@
 
 **A real-time, multi-campaign tabletop RPG companion for the GM and their players.**
 Modular character sheets, inventory and equipment, skills, Markdown lore, maps with fog of war, a shared dice
-roller, NPCs and turn order, private notebooks. An installable web app (PWA) with no build step, hosted for free on
+roller, NPCs and turn order, polls, private notebooks, and a set of hands-on “fidget” widgets to play with between
+rolls. An installable web app (PWA) with no build step, hosted for free on
 GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Interface in English and French.
 
 ![Character sheet](docs/screenshots/en/sheet.jpg)
@@ -24,7 +25,6 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 7. [Development](#development)
 8. [Security](#security)
 9. [Troubleshooting](#troubleshooting)
-10. [What about Supabase?](#what-about-supabase)
 
 ---
 
@@ -42,6 +42,10 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 - Per-field visibility: *everyone*, *GM + owner* or *GM only*, enforced by the server.
 - Players edit their own stats and information fields, and read the other players' sheets, inventory and equipment
   (public fields only); each player can rearrange their sheet and save or reuse layouts as templates.
+- The GM can **lock** a stat or an information field: the player still sees it but can no longer change it (checked
+  by the server too).
+- First name, last name and an optional **alias**: the player chooses to show the alias instead of their name on the
+  sheet, in the scene and in the dice log.
 - Change history the GM can browse and roll back.
 
 **Inventory, equipment, skills**
@@ -54,20 +58,36 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 **World**
 - **Lore**: list or grid of Markdown articles (images, tables), coloured categories, secret articles, advanced search
   (`"exact phrase"`, `-exclude`), comments under articles.
-- **Maps**: image import, points of interest linked to the lore, labels, **fog of war** set per map and revealed or
-  covered with a brush by the GM (diameter in map pixels); players only ever download a masked copy of a fogged map,
-  so the hidden parts cannot be recovered from the browser; measure (with the map's scale), draw and ping, shared live with the whole table.
+- Comments follow their article: when an article becomes secret, so do its comments.
+- **Maps**: image import, points of interest linked to the lore, labels, measure (with the map's scale), draw and
+  ping, shared live with the whole table.
+- **Fog of war** set per map, revealed or covered with a brush by the GM, with a brush size in map pixels (slider,
+  number or `[` / `]` keys) and an outline that shows exactly what will be painted. **Cheat-proof**: under fog, the
+  players never download the original image, only a masked copy drawn by the GM's app; the hidden parts of the map
+  never reach their browser.
 - Reveals: the GM pushes an image or a text to the players’ screens.
 
 **At the table**
 - Real-time shared **dice roller**: formulas (`(2d6+1d8-4)*2`), stat aliases (`(2d6+AGI)*FOR`), a roll on a stat's
   click or a skill's button (each with its own formula if wanted), named rolls, secret rolls, the same log for everyone,
   which the GM can clear.
-- **Scene bar**: portraits of the characters and NPCs present, reorderable turn order, current turn.
+- **Who rolls**: a roll belongs to the signed-in user, not to the sheet on screen. A player with several characters
+  picks one; the GM rolls as “GM”, as any NPC of the scene, or under a free name.
+- **Scene bar**: portraits of the characters and NPCs present (names and portraits updated live), reorderable turn
+  order, current turn; a click on a portrait opens that character's sheet.
 - **NPC library** (GM): templates and multiple copies for groups of monsters; players only see the NPCs in the scene,
   and only their public information.
 - Session log, paginated Markdown **private notebooks** for each player.
-- **Polls** for the whole campaign or chosen players: one or several answers, anonymous or not, results live.
+- **Polls** for the whole campaign or chosen players: one or several answers, anonymous or not, results live; the GM
+  can edit a poll (its answers are frozen once someone voted), close or delete it.
+
+**Fidget widgets**
+- Tiles to keep restless hands busy at the table, placed on the sheet like any other tile: a hand spinner (with a
+  best-speed record), musical pads, *Bip* the pocket pet to feed and play with, a spring fader, a control panel full
+  of switches, knobs and buttons, a turn timer (countdown or stopwatch), a radar, analogue gauges with a Geiger
+  counter, tally counters and an oscilloscope.
+- Optional sounds (mute button per tile); they only run on your own screen. In layout edit mode, the **Widgets**
+  library adds or removes them.
 
 **Images**
 - Manual crop on import (portraits, item illustrations).
@@ -85,14 +105,24 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 
 ## Screenshots
 
-| Inventory | Skills |
+| Equipment | Polls |
 |---|---|
+| ![Equipment: stats with bonuses, anatomical slots](docs/screenshots/en/equipment.jpg) | ![Polls](docs/screenshots/en/polls.jpg) |
+| **Fog of war, GM view** (brush outline, translucent fog) | **The same map, player view** (masked copy) |
+| ![Fog of war, GM](docs/screenshots/en/map-fog-gm.jpg) | ![Fog of war, player](docs/screenshots/en/map-fog-player.jpg) |
+| **Lore, grid with coloured categories** | **Fidget widgets** |
+| ![Lore grid](docs/screenshots/en/lore-grid.jpg) | ![Widgets](docs/screenshots/en/widgets.jpg) |
+| **Inventory** | **Skills** |
 | ![Inventory](docs/screenshots/en/inventory.jpg) | ![Skills](docs/screenshots/en/skills.jpg) |
-| **Lore** | **Map** |
-| ![Lore](docs/screenshots/en/lore.jpg) | ![Map](docs/screenshots/en/map.jpg) |
 
 <details>
-<summary>Sign-in screen</summary>
+<summary>More: widgets, lore article, map, sign-in</summary>
+
+![More widgets: spinner, pads, Bip](docs/screenshots/en/widgets-2.jpg)
+
+![Lore](docs/screenshots/en/lore.jpg)
+
+![Map](docs/screenshots/en/map.jpg)
 
 ![Sign in](docs/screenshots/en/login.jpg)
 
@@ -300,7 +330,7 @@ serves the new version. Cloudflare applies `web/_headers` (security and cache he
 node tests/e2e.mjs
 ```
 
-This test creates throwaway accounts (admin, player), checks 54 rules (permissions, invitations, dice, inventory,
+This test creates throwaway accounts (admin, player), checks 58 rules (permissions, invitations, dice, inventory,
 NPCs, image search…), then deletes everything it created. It uses the Appwrite CLI signed in at step 5.
 
 ---
@@ -395,12 +425,6 @@ docs/           screenshots
 | The Pages workflow publishes nothing (“example values”) | Fill in `tn.config.json`, run `node tools/configure.mjs`, commit. |
 | The Pixabay tab says “not configured” | Add `PIXABAY_KEY` to the `image-search` Function, then redeploy it. |
 | DuckDuckGo does not answer | No official API: DuckDuckGo sometimes refuses automated requests. Try again later or use another tab. |
-
-## What about Supabase?
-
-Table Noire works **with Appwrite only**. The server relies on features specific to Appwrite: teams and roles,
-row permissions set by event-triggered Functions, Realtime, Functions with a temporary key. A port to Supabase
-(Postgres + RLS, Edge Functions, Realtime) is possible, but it does not exist today.
 
 ## Licence
 
