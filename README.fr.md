@@ -58,7 +58,8 @@ backend.
 - **Lore** : articles en Markdown (images, tableaux) en liste ou en grille, catégories colorées, articles secrets,
   recherche avancée (`"phrase exacte"`, `-exclure`), commentaires sous les articles.
 - **Cartes** : import d'image, points d'intérêt reliés au lore, textes, **brouillard de guerre** choisi par carte,
-  dévoilé ou recouvert au pinceau par le MJ ; mesure (à l'échelle de la carte), dessin et ping, partagés en direct.
+  dévoilé ou recouvert au pinceau par le MJ (diamètre en pixels de la carte) ; les joueurs ne téléchargent qu’une copie
+  masquée d’une carte sous brouillard, les zones cachées sont donc irrécupérables depuis le navigateur ; mesure (à l'échelle de la carte), dessin et ping, partagés en direct.
 - Révélations : le MJ pousse une image ou un texte à l'écran des joueurs.
 
 **À la table**

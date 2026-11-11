@@ -42,7 +42,7 @@ app.example.com ── GitHub / Cloudflare Pages ─┐   appwrite.example.com �
 | Comptes | `profiles`, `invites`, `invite_claims` |
 | Fiches | `characters`, `field_defs` (modèle de fiche de la campagne), `character_values`, `wounds`, `player_prefs` (journal, disposition perso) |
 | Inventaire | `item_defs` (bibliothèque, `slot`), `item_instances` (`qty`, `equippedSlot`), `skill_defs`, `skill_instances` |
-| Monde | `lore_articles`, `maps` (`fog`), `map_pois`, `map_texts` |
+| Monde | `lore_articles`, `maps` (`fog`, `playerFileId`), `map_pois`, `map_texts` |
 | MJ | `gm_notes` (notes MJ des blessures, objets, compétences), `session_log`, `change_log` |
 | Jeu | `dice_rolls` (journal de dés, jets secrets) |
 | Partagé | `sheet_templates` (modèles de fiche, lisibles par tous les utilisateurs) |
@@ -63,7 +63,7 @@ Le schéma est décrit dans `appwrite/build_config.py`, qui génère `appwrite.c
 | `redeem-invite` | inscription par lien à usage unique, réinitialisation de mot de passe |
 | `roll-dice` | jet côté serveur (formules, jets nommés et secrets) |
 | `player-action` | actions des joueurs : valeurs de jauge, masquage, portrait (validé), équiper / déséquiper, utiliser, donner |
-| `apply-visibility` | recalcule les permissions à chaque création / modification de ligne |
+| `apply-visibility` | recalcule les permissions à chaque création / modification de ligne ; pour `maps`, aussi celles des images : sous brouillard l’original est réservé au MJ, les joueurs lisent la copie masquée `playerFileId` dessinée par l’appli du MJ |
 | `guard-signup` | supprime les comptes créés hors invitation |
 | `image-search` | recherche d'images Pixabay (clé unique du serveur, variable `PIXABAY_KEY`) et DuckDuckGo ; télécharge l'image choisie (adresses publiques seulement, images ≤ 6 Mo) |
 

@@ -50,7 +50,7 @@ async function importCampaign(file) {
       const d = { ...stripRow(r), campaignId: id };
       for (const k of ['characterId', 'fieldId', 'itemDefId', 'skillDefId', 'statFieldId', 'mapId', 'parentMapId', 'targetId', 'entityId']) if (k in d) d[k] = re(d[k]);
       if (t === 'characters') d.ownerId = null;   // players of the old campaign are not members of the new one
-      if (t === 'maps' && d.imageFileId) files.add(`maps/${d.imageFileId}`);
+      if (t === 'maps') { d.playerFileId = ''; if (d.imageFileId) files.add(`maps/${d.imageFileId}`); }
       if (t === 'item_defs' && d.artFileId) files.add(`item-art/${d.artFileId}`);
       for (const x of JSON.stringify(d).matchAll(/buckets\/(lore-images|item-art|maps|portraits)\/files\/([A-Za-z0-9._-]+)\//g)) files.add(`${x[1]}/${x[2]}`);
       // session journal rows are not normalised by apply-visibility: permissions here

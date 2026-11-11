@@ -55,7 +55,8 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 - **Lore**: list or grid of Markdown articles (images, tables), coloured categories, secret articles, advanced search
   (`"exact phrase"`, `-exclude`), comments under articles.
 - **Maps**: image import, points of interest linked to the lore, labels, **fog of war** set per map and revealed or
-  covered with a brush by the GM; measure (with the map's scale), draw and ping, shared live with the whole table.
+  covered with a brush by the GM (diameter in map pixels); players only ever download a masked copy of a fogged map,
+  so the hidden parts cannot be recovered from the browser; measure (with the map's scale), draw and ping, shared live with the whole table.
 - Reveals: the GM pushes an image or a text to the players’ screens.
 
 **At the table**

@@ -1,6 +1,9 @@
 /* world.js — binds the mockup lore (LORE) and maps (MAPS with pois / texts) to Appwrite.
    Tables: lore_articles, maps, map_pois, map_texts (campaign-wide, each row has a visibility).
    Images: imported maps go to the `maps` bucket, lore images to `lore-images` (read: campaign team).
+   Fog of war: the original map image is readable by the GMs only (apply-visibility); the players load a masked copy
+   (maps.playerFileId) that the GM's app draws from the fog strokes and uploads on each change — the hidden parts of
+   the map never reach a player's browser.
    Save: the GM's LORE / MAPS are diffed against the last synced snapshot; players only read.
    Realtime: changes from other sessions reload the world when nothing local is pending. */
 
@@ -26,9 +29,12 @@ async function loadWorld(quiet = false) {
     clearWorld();
     lore.sort((a, b) => a.$createdAt.localeCompare(b.$createdAt))
       .forEach(r => LORE.push({ id: r.$id, title: r.title, vis: visFromDb(r.visibility), md: r.bodyMd || '', cat: r.category || '' }));
-    maps.forEach(r => { MAPS[r.$id] = { name: r.name, parent: r.parentMapId || null, img: r.imageFileId ? fileUrl('maps', r.imageFileId) : '',
+    const gmView = isGmHere();
+    maps.forEach(r => { const fogRow = (() => { try { return JSON.parse(r.fog || 'null'); } catch (_) { return null; } })();
+      const shown = !gmView && fogRow && fogRow.on && r.playerFileId ? r.playerFileId : r.imageFileId;
+      MAPS[r.$id] = { name: r.name, parent: r.parentMapId || null, img: shown ? fileUrl('maps', shown) : '', pubId: r.playerFileId || '',
       fileId: r.imageFileId || '', w: r.width || 1600, h: r.height || 1100, vis: visFromDb(r.visibility), credit: '', pois: [], texts: [],
-      fog: (() => { try { return JSON.parse(r.fog || 'null'); } catch (_) { return null; } })() }; });
+      fog: fogRow }; });
     for (const id of Object.keys(MAPS)) if (MAPS[id].parent && !MAPS[MAPS[id].parent]) MAPS[id].parent = null;   // parent hidden or gone
     pois.forEach(r => MAPS[r.mapId] && MAPS[r.mapId].pois.push({ id: r.$id, x: r.x, y: r.y, label: r.label || '', icon: r.icon || 'pin',
       color: r.color || '#e2672c', link: r.targetType && r.targetType !== 'none' && r.targetId ? `${r.targetType}:${r.targetId}` : '', vis: visFromDb(r.visibility), desc: r.description || '' }));
@@ -39,6 +45,7 @@ async function loadWorld(quiet = false) {
     WD.snap = worldSnapshot();
   } catch (e) { if (!quiet) toast('Lore et cartes indisponibles : ' + errMsg(e)); }
   subscribeWorld();
+  if (!quiet && isGmHere() && Object.values(MAPS).some(needsPub)) { WD.snap = ''; scheduleWorld(300); }   // maps under fog without an up-to-date masked copy
   if (quiet && WD.snap === pre) return;   // nothing changed: no redraw
   if (quiet) { if (!S.mapEdit || S.tab !== 'carte') softRender(); } else render();
 }
@@ -63,7 +70,57 @@ async function syncWorld() {
 async function uploadImage(bucketId, dataUrl, name) {
   const blob = await (await fetch(dataUrl)).blob();
   const file = await toWebp(blob, bucketId === 'maps' ? 4096 : 2048, name);
-  return new Appwrite.Storage(AW.c).createFile({ bucketId, fileId: Appwrite.ID.unique(), file, permissions: await teamReadPerms() });
+  // a map image starts GM-only: apply-visibility opens it to the players when the map has no fog
+  const permissions = bucketId === 'maps' ? await gmFilePerms() : await teamReadPerms();
+  return new Appwrite.Storage(AW.c).createFile({ bucketId, fileId: Appwrite.ID.unique(), file, permissions });
+}
+async function gmFilePerms(readRole) {
+  if (!(await teamReadPerms()).length) return [];   // admin outside the team: default rights, apply-visibility fixes them
+  const gm = Appwrite.Role.team(ME.camp.$id, 'gm');
+  return [Appwrite.Permission.read(readRole || gm), Appwrite.Permission.update(gm), Appwrite.Permission.delete(gm)];
+}
+
+/* ---------------------------------------------------------------- fog: the players' masked copy */
+// fog strokes, in order: [x, y, r] reveals, [x, y, r, 1] covers again (map image pixel space)
+const fogSig = m => { const s = JSON.stringify([m.fileId, m.w, m.h, (m.fog && m.fog.holes) || []]); let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h.toString(36) + s.length.toString(36); };
+const needsPub = m => !!(m && m.fog && m.fog.on && m.fileId && (!m.pubId || m.fog.ps !== fogSig(m)));
+async function fetchFile(url) {
+  const fb = (() => { try { return localStorage.getItem('cookieFallback'); } catch (_) { return null; } })();
+  const res = await fetch(url, { credentials: 'include', headers: fb && fb !== '[]' ? { 'X-Fallback-Cookies': fb } : {} });
+  if (!res.ok) throw new Error('image ' + res.status);
+  return res.blob();
+}
+async function maskedMap(m, name) {
+  const bmp = await createImageBitmap(await fetchFile(fileUrl('maps', m.fileId)));
+  const W = bmp.width, H = bmp.height, k = W / (m.w || W);
+  const mask = document.createElement('canvas'); mask.width = W; mask.height = H;
+  const mx = mask.getContext('2d');
+  for (const [x, y, r, cover] of m.fog.holes || []) {
+    mx.globalCompositeOperation = cover ? 'destination-out' : 'source-over';
+    mx.beginPath(); mx.arc(x * k, y * k, Math.max(.5, r * k), 0, Math.PI * 2); mx.fillStyle = '#fff'; mx.fill();
+  }
+  mx.globalCompositeOperation = 'source-in'; mx.drawImage(bmp, 0, 0);   // the image, only inside the revealed parts
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const ox = out.getContext('2d'); ox.fillStyle = '#0d0c0a'; ox.fillRect(0, 0, W, H); ox.drawImage(mask, 0, 0);
+  bmp.close && bmp.close();
+  const blob = await new Promise((ok, ko) => out.toBlob(b => (b ? ok(b) : ko(new Error('canvas'))), 'image/webp', .86));
+  return new File([blob], name + '.webp', { type: 'image/webp' });
+}
+// before the rows are written: a fresh masked copy for each map whose fog changed; the replaced copies are returned
+async function publishMasks() {
+  const old = [];
+  for (const [id, m] of Object.entries(MAPS)) {
+    if (!(m.fog && m.fog.on && m.fileId)) { if (m.pubId) { old.push(m.pubId); m.pubId = ''; } continue; }
+    if (!needsPub(m)) continue;
+    try {
+      const file = await maskedMap(m, 'map-pub-' + id);
+      const f = await new Appwrite.Storage(AW.c).createFile({ bucketId: 'maps', fileId: Appwrite.ID.unique(), file,
+        permissions: await gmFilePerms(m.vis === 'mj' ? null : Appwrite.Role.team(ME.camp.$id)) });
+      if (m.pubId) old.push(m.pubId);
+      m.pubId = f.$id; m.fog.ps = fogSig(m);
+    } catch (e) { console.warn('masked map', id, e); }
+  }
+  return old;
 }
 const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(+v || 0)));
 
@@ -76,7 +133,7 @@ function desiredWorld() {
   }
   for (const [id, m] of Object.entries(MAPS)) {
     want.maps.set(id, { name: String(m.name || 'Carte').slice(0, 128), imageFileId: m.fileId || '', width: clampInt(m.w, 1, 1e6), height: clampInt(m.h, 1, 1e6),
-      parentMapId: m.parent && MAPS[m.parent] ? m.parent : '', visibility: visToDb(m.vis || 'all'), fog: m.fog ? JSON.stringify(m.fog) : '' });
+      parentMapId: m.parent && MAPS[m.parent] ? m.parent : '', visibility: visToDb(m.vis || 'all'), fog: m.fog ? JSON.stringify(m.fog) : '', playerFileId: m.pubId || '' });
     for (const p of m.pois) {
       const [tt, ti] = p.link ? p.link.split(':') : ['none', ''];
       want.map_pois.set(p.id, { mapId: id, x: clampInt(p.x, -1e6, 1e6), y: clampInt(p.y, -1e6, 1e6), label: String(p.label || '').slice(0, 128),
@@ -93,6 +150,7 @@ async function pushWorld() {
   for (const [id, m] of Object.entries(MAPS)) if (String(m.img || '').startsWith('data:')) {
     const f = await uploadImage('maps', m.img, 'map-' + id); m.fileId = f.$id; m.img = fileUrl('maps', f.$id);
   }
+  const oldMasks = await publishMasks();
   const { c, want } = desiredWorld();
   const st = WD.store;
   for (const t of WORLD_TABLES) {   // creates / updates (parents before children)
@@ -106,10 +164,12 @@ async function pushWorld() {
     for (const [id, cur] of [...st[t]]) {
       if (want[t].has(id)) continue;
       await AW.db.deleteRow(T(t, { rowId: id })).catch(() => {});
-      if (t === 'maps' && cur.imageFileId) await new Appwrite.Storage(AW.c).deleteFile({ bucketId: 'maps', fileId: cur.imageFileId }).catch(() => {});
+      if (t === 'maps') for (const fid of [cur.imageFileId, cur.playerFileId]) if (fid) await new Appwrite.Storage(AW.c).deleteFile({ bucketId: 'maps', fileId: fid }).catch(() => {});
       st[t].delete(id);
     }
   }
+  // the rows now point to the new masked copies: the old ones go
+  for (const fid of oldMasks) await new Appwrite.Storage(AW.c).deleteFile({ bucketId: 'maps', fileId: fid }).catch(() => {});
 }
 
 /* ---------------------------------------------------------------- realtime */

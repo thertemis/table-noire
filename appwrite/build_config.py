@@ -98,7 +98,7 @@ TABLES = [
      [ix('k_char', ['characterId']), ix('k_campaign', ['campaignId'])]),
     ('lore_articles', 'Lore', True, CAMPAIGN, [CAMP(), vc('title', 255, True), tx('bodyMd'), vc('category', 64), VIS()], [ix('k_campaign', ['campaignId'])]),
     ('maps', 'Cartes', True, CAMPAIGN,
-     [CAMP(), vc('name', 128, True), vc('imageFileId', 36), it('width', 1), it('height', 1), vc('parentMapId', 36), VIS(), tx('fog')], [ix('k_campaign', ['campaignId'])]),
+     [CAMP(), vc('name', 128, True), vc('imageFileId', 36), it('width', 1), it('height', 1), vc('parentMapId', 36), VIS(), tx('fog'), vc('playerFileId', 36)], [ix('k_campaign', ['campaignId'])]),
     ('map_pois', 'Points d’intérêt', True, CAMPAIGN,
      [CAMP(), vc('mapId', 36, True), it('x'), it('y'), vc('label', 128), tx('description'), vc('icon', 32), vc('color', 16),
       en('targetType', ['none', 'lore', 'map'], 'none'), vc('targetId', 36), VIS()], [ix('k_map', ['mapId']), ix('k_campaign', ['campaignId'])]),
@@ -156,7 +156,7 @@ FUNCTIONS = [
     ('admin', [USERS], [], 120, ['users.read', 'users.write', 'teams.read', 'teams.write', 'rows.read', 'rows.write', 'files.read', 'files.write']),
     ('roll-dice', [USERS], [], 15, ['users.read', 'teams.read', 'rows.read', 'rows.write']),
     ('player-action', [USERS], [], 15, ['teams.read', 'rows.read', 'rows.write']),
-    ('apply-visibility', [], [f'databases.{DATABASE_ID}.tables.{t}.rows.*.{e}' for t in WATCHED for e in ('create', 'update')], 15, ['rows.read', 'rows.write']),
+    ('apply-visibility', [], [f'databases.{DATABASE_ID}.tables.{t}.rows.*.{e}' for t in WATCHED for e in ('create', 'update')], 15, ['rows.read', 'rows.write', 'files.read', 'files.write']),
     ('guard-signup', [], ['users.*.create'], 45, ['users.read', 'users.write']),
     # image search for portraits / item art: Pixabay (key in the PIXABAY_KEY variable, set in the console) and DuckDuckGo
     ('image-search', [USERS], [], 20, []),

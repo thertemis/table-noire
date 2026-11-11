@@ -217,6 +217,22 @@ try {
   check('a closed poll refuses votes', (await fn(player, 'player-action', { action: 'vote', pollId: pAll.id, choices: ['o1'] })).ok === false);
   check('a player cannot delete a poll', (await fn(player, 'admin', { action: 'pollDelete', pollId: pAll.id })).ok === false);
 
+  // fog of war: under fog the original map image is GM-only, the players read the masked copy
+  const upPerm = (name, perms) => { const fd = new FormData(); fd.append('fileId', 'unique()'); fd.append('file', new Blob([png], { type: 'image/png' }), name);
+    for (const x of perms) fd.append('permissions[]', x);
+    return fetch(`${EP}/storage/buckets/maps/files`, { method: 'POST', headers: { 'X-Appwrite-Project': P, 'User-Agent': H['User-Agent'], Cookie: admin }, body: fd }).then(r => r.json()); };
+  const gmP = [`read("team:${camp}/gm")`, `update("team:${camp}/gm")`, `delete("team:${camp}/gm")`];
+  const orig = await upPerm('orig.png', gmP), pub = await upPerm('pub.png', [`read("team:${camp}")`, ...gmP.slice(1)]);
+  globalThis.__e2eFog = orig.$id;
+  const fogMap = await row(admin, 'maps', { campaignId: camp, name: 'Brouillard', imageFileId: orig.$id, playerFileId: pub.$id, width: 1, height: 1, visibility: 'all', fog: JSON.stringify({ on: true, holes: [] }) });
+  await new Promise(r => setTimeout(r, 4000));
+  const canRead = async (ck, id) => (await api(ck, 'GET', `/storage/buckets/maps/files/${id}`)).status === 200;
+  check('under fog a player cannot read the original map image', !!fogMap.$id && !(await canRead(player, orig.$id)) && await canRead(admin, orig.$id));
+  check('under fog a player reads the masked copy', await canRead(player, pub.$id));
+  await api(admin, 'PATCH', `/tablesdb/${DB}/tables/maps/rows/${fogMap.$id}`, { data: { fog: JSON.stringify({ on: false, holes: [] }), playerFileId: '' } });
+  await new Promise(r => setTimeout(r, 4000));
+  check('without fog the players read the map image again', await canRead(player, orig.$id));
+
   // online image search (server-side: Pixabay key and DuckDuckGo never reach the browser)
   check('image search needs a session', (await fn(null, 'image-search', { action: 'search', source: 'ddg', q: 'chat' })).ok === false);
   const lan = await fn(player, 'image-search', { action: 'fetch', url: 'http://192.168.1.1/a.jpg' });
@@ -238,7 +254,8 @@ try {
       const del = await fn(admin, 'admin', { action: 'deleteCampaign', campaignId: camp });
       if (globalThis.__e2eFile) {
         const gone = (await api(admin, 'GET', `/storage/buckets/maps/files/${globalThis.__e2eFile}`)).status === 404;
-        check('deleting the campaign deletes its images', del.ok && gone, JSON.stringify(del));
+        const fogGone = !globalThis.__e2eFog || (await api(admin, 'GET', `/storage/buckets/maps/files/${globalThis.__e2eFog}`)).status === 404;
+        check('deleting the campaign deletes its images', del.ok && gone && fogGone, JSON.stringify(del));
       }
     }
   } catch (_) {}

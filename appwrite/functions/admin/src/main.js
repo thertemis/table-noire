@@ -160,14 +160,14 @@ export default async ({ req, res, log, error }) => {
         await db.deleteRow(T('campaigns', { rowId: c })).catch(() => {});
         await teams.delete({ teamId: c }).catch(() => {});
         // images readable by this campaign: deleted, or only unshared when another campaign still uses them (copies)
-        const storage = new Storage(client), mine = `read("team:${c}")`;
+        const storage = new Storage(client), ofMine = x => x.includes(`"team:${c}"`) || x.includes(`"team:${c}/gm"`);
         let filesDeleted = 0, filesUnshared = 0;
         for (const bucketId of ['maps', 'item-art', 'lore-images', 'portraits']) {
           for (let cursor = null; ;) {
             const page = await storage.listFiles({ bucketId, queries: [Query.limit(100), ...(cursor ? [Query.cursorAfter(cursor)] : [])] }).catch(() => ({ files: [] }));
             for (const f of page.files) {
-              if (!f.$permissions.includes(mine)) continue;
-              const rest = f.$permissions.filter(x => x !== mine);
+              if (!f.$permissions.some(ofMine)) continue;
+              const rest = f.$permissions.filter(x => !ofMine(x));
               if (rest.some(x => x.startsWith('read("team:'))) { await storage.updateFile({ bucketId, fileId: f.$id, permissions: rest }).then(() => filesUnshared++).catch(() => {}); }
               else await storage.deleteFile({ bucketId, fileId: f.$id }).then(() => filesDeleted++).catch(() => {});
             }
@@ -366,19 +366,22 @@ export default async ({ req, res, log, error }) => {
         // give a campaign read access to images it references (after an import); GM of that campaign
         const c = String(b.campaignId);
         await needGm(c);
-        const storage = new Storage(client), perm = Permission.read(Role.team(c));
+        const storage = new Storage(client), teamRead = Permission.read(Role.team(c)), gmRole = Role.team(c, 'gm');
+        const fogged = new Set((await listAll('maps', [Query.equal('campaignId', c)])).filter(r => { try { return !!JSON.parse(r.fog || 'null')?.on; } catch (_) { return false; } }).map(r => r.imageFileId));
         let shared = 0, refused = 0;
         for (const f of (Array.isArray(b.files) ? b.files : []).slice(0, 500)) {
           const [bucketId, fileId] = String(f).split('/');
           if (!['maps', 'item-art', 'lore-images', 'portraits'].includes(bucketId) || !fileId) continue;
           const cur = await storage.getFile({ bucketId, fileId }).catch(() => null); if (!cur) continue;
+          const perm = bucketId === 'maps' && (fogged.has(fileId) || b.gmOnly === true) ? Permission.read(gmRole) : teamRead;
           if (cur.$permissions.includes(perm)) continue;
           // only files the caller could already reach: readable by a campaign they run (or any file for the admin)
-          const teamsOf = cur.$permissions.map(x => /^read\("team:([^"/]+)"\)$/.exec(x)?.[1]).filter(Boolean);
+          const teamsOf = cur.$permissions.map(x => /^read\("team:([^"/]+)(?:\/gm)?"\)$/.exec(x)?.[1]).filter(Boolean);
           let allowed = isAdmin;
           for (const t of teamsOf) if (!allowed && (await isGmOf(t).catch(() => false))) allowed = true;
           if (!allowed) { refused++; continue; }
-          await storage.updateFile({ bucketId, fileId, permissions: [...cur.$permissions, perm] }).then(() => shared++).catch(() => {});
+          const extra = perm === teamRead ? [perm] : [perm, Permission.update(gmRole), Permission.delete(gmRole)];
+          await storage.updateFile({ bucketId, fileId, permissions: [...new Set([...cur.$permissions, ...extra])] }).then(() => shared++).catch(() => {});
         }
         return res.json({ ok: true, shared, refused });
       }

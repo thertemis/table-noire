@@ -1427,6 +1427,14 @@
           "required": false,
           "array": false,
           "default": null
+        },
+        {
+          "key": "playerFileId",
+          "type": "varchar",
+          "size": 36,
+          "required": false,
+          "array": false,
+          "default": null
         }
       ],
       "indexes": [
@@ -2705,7 +2713,9 @@
       "path": "functions/apply-visibility",
       "scopes": [
         "rows.read",
-        "rows.write"
+        "rows.write",
+        "files.read",
+        "files.write"
       ]
     },
     {

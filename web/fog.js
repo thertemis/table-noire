@@ -1,17 +1,21 @@
 /* fog.js — map tools.
-   Fog of war (GM): maps.fog (JSON) = { on, holes: [[x, y, r], …], scale: { px, n, unit } } in the map image's pixel
-   space, saved with the map (world.js). Players see the map covered except the revealed circles (points and texts
+   Fog of war (GM): maps.fog (JSON) = { on, holes: [[x, y, r] reveal | [x, y, r, 1] cover, …] in order, scale: { px, n, unit },
+   ps: signature of the masked copy } in the map image's pixel space, saved with the map (world.js). Players see the map covered except the revealed circles (points and texts
    under the fog are hidden too); the GM sees the fog translucent. A new map asks whether it has fog; switching the fog
    off asks for confirmation (it shows the whole map to the players).
    Tools above the map, one at a time (picking another tool, adding a point / text or leaving edit mode always stops
    the brush, so nothing is revealed by accident):
      everyone: Move · Measure (with the GM's scale) · Draw · Ping · Eraser (own drawings; the GM erases any)
-     GM, when the map has fog: Reveal · Cover, brush size.
+     GM, when the map has fog: Reveal · Cover, brush diameter in map pixels (slider, number, [ and ] keys), brush outline.
    Drawings and pings are rows of map_marks created by player-action (read: campaign; delete: author + GMs) and
    shared live (realtime). A ping row is deleted by its author after a few seconds.
-   Note: the map image file itself stays readable by the campaign; the fog only hides it in the app. */
+   Anti-cheat: under fog the players never load the original image, only a masked copy drawn by the GM's app (world.js). */
 
-const FOG = { size: 120, drag: null };
+const FOG = { size: 120, drag: null, cursor: null };   // size: brush diameter, in map pixels
+const FOG_MIN = 2, FOG_MAX = 2000;
+const fogSize = v => Math.max(FOG_MIN, Math.min(FOG_MAX, Math.round(+v || FOG.size)));
+// is a map point revealed? the strokes apply in order (a cover hides what an earlier reveal opened)
+const fogOpenAt = (holes, px, py) => { let open = false; for (const [x, y, r, c] of holes || []) if (Math.hypot(px - x, py - y) <= r) open = !c; return open; };
 const MT = { tool: 'move', color: '#e2672c', width: 4, marks: new Map(), pings: [], live: null, measure: null, unsub: null };
 const MT_COLORS = ['#e2672c', '#d6a23c', '#4f8d89', '#86985a', '#b8452f', '#8d6b9a', '#f0d9b5', '#141310'];
 const fogOf = m => (m && m.fog && m.fog.on ? m.fog : null);
@@ -22,7 +26,7 @@ const screenU = px => px * unitPx() / S.view.k;   // a length in screen pixels, 
 function fogSvg(m) {
   const f = fogOf(m); if (!f) return '';
   return `<g id="fogLayer" pointer-events="none"><defs><mask id="fogMask" maskUnits="userSpaceOnUse" x="0" y="0" width="${m.w}" height="${m.h}">
-    <rect width="${m.w}" height="${m.h}" fill="#fff"/>${(f.holes || []).map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#000"/>`).join('')}</mask></defs>
+    <rect width="${m.w}" height="${m.h}" fill="#fff"/>${(f.holes || []).map(([x, y, r, c]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c ? '#fff' : '#000'}"/>`).join('')}</mask></defs>
     <rect class="fog ${isMJ() ? 'gm' : ''}" width="${m.w}" height="${m.h}" mask="url(#fogMask)"/></g>`;
 }
 const pathD = pts => 'M' + pts.map(p => `${p[0]} ${p[1]}`).join(' L');
@@ -39,6 +43,8 @@ function marksSvg(mapId) {
 }
 function overSvg(m) {
   let out = '';
+  if (FOG.cursor && (MT.tool === 'reveal' || MT.tool === 'cover') && fogOf(m))
+    out += `<circle class="brush ${MT.tool}" cx="${FOG.cursor.x}" cy="${FOG.cursor.y}" r="${FOG.size / 2}" stroke-width="1.5"/>`;
   if (MT.live && MT.live.pts.length > 1) out += `<path class="mark" d="${pathD(MT.live.pts)}" stroke="${MT.color}" stroke-width="${MT.width}"/>`;
   if (MT.measure) {
     const { a, b } = MT.measure, d = Math.hypot(b.x - a.x, b.y - a.y), s = (m.fog && m.fog.scale) || null;
@@ -65,7 +71,7 @@ function placeFog() {
     const holes = m.fog.holes || [];
     w.querySelectorAll('.poi,.mtext').forEach(el => {
       const it = refObj('poi', el.dataset.poi || el.dataset.mtext); if (!it) return;
-      el.style.display = holes.some(([x, y, r]) => Math.hypot(it.x - x, it.y - y) <= r) ? '' : 'none';
+      el.style.display = fogOpenAt(holes, it.x, it.y) ? '' : 'none';
     });
   }
 }
@@ -97,7 +103,7 @@ renderMap = function () {
   const bar = `<div class="maptools" role="toolbar" aria-label="Outils de carte">
     ${toolBtn('move', 'move', 'Déplacer')}${toolBtn('measure', 'target', 'Mesurer')}${toolBtn('draw', 'edit', 'Dessiner')}${toolBtn('ping', 'pin', 'Ping')}${toolBtn('erase', 'trash', 'Gomme')}
     ${gmFog ? `<span class="sep"></span>${toolBtn('reveal', 'eye', 'Révéler')}${toolBtn('cover', 'eyeOff', 'Recouvrir')}
-      <label class="fog-size">Pinceau<input type="range" min="20" max="400" step="10" value="${FOG.size}" data-fog-size aria-label="Taille du pinceau"></label>` : ''}
+      <label class="fog-size" title="Diamètre du pinceau en pixels de la carte · touches [ et ]">Pinceau<input type="range" min="${FOG_MIN}" max="${Math.min(FOG_MAX, Math.max(400, Math.round(Math.max(m.w, m.h) / 4)))}" step="1" value="${FOG.size}" data-fog-size aria-label="Taille du pinceau"><input class="field" type="number" min="${FOG_MIN}" max="${FOG_MAX}" step="1" value="${FOG.size}" data-fog-size aria-label="Diamètre du pinceau en pixels">px</label>` : ''}
     ${MT.tool === 'draw' ? `<span class="sep"></span><span class="mt-sw">${MT_COLORS.map(c => `<button style="--sw:${c}" data-act="mapColor" data-c="${c}" aria-pressed="${MT.color === c}" aria-label="Couleur ${c}"></button>`).join('')}</span>
       <label class="fog-size">Trait<input type="range" min="1" max="20" value="${MT.width}" data-mt-width aria-label="Épaisseur du trait"></label>` : ''}
     ${MT.tool === 'erase' ? `<span class="sep"></span><button class="btn xs" data-act="eraseMine">Effacer mes dessins</button>${isMJ() ? '<button class="btn xs" data-act="eraseAll">Effacer tous les dessins</button>' : ''}` : ''}
@@ -132,7 +138,7 @@ ACT.eraseAll = () => {
 };
 document.addEventListener('input', e => {
   if (!e.target.matches) return;
-  if (e.target.matches('[data-fog-size]')) FOG.size = +e.target.value;
+  if (e.target.matches('[data-fog-size]')) { FOG.size = fogSize(e.target.value); document.querySelectorAll('[data-fog-size]').forEach(x => { if (x !== e.target) x.value = FOG.size; }); drawOver(); }
   if (e.target.matches('[data-mt-width]')) MT.width = +e.target.value;
   if (e.target.matches('[data-scale]') && MAPS[S.map]) {
     const f = mapMeta(MAPS[S.map]), s = f.scale = { ...(f.scale || {}) }, k = e.target.dataset.scale;
@@ -145,11 +151,17 @@ const toolOn = e => S.tab === 'carte' && MT.tool !== 'move' && ME.camp && e.targ
 const worldAt = e => toWorld(svgPoint($('#mapsvg'), e.clientX, e.clientY));
 function paintAt(e) {
   const m = MAPS[S.map]; if (!fogOf(m) || !isMJ()) return;
-  const p = worldAt(e), r = Math.round(screenU(FOG.size / 2) * 2) || FOG.size;
+  const p = worldAt(e), r = Math.max(1, FOG.size / 2), x = Math.round(p.x * 10) / 10, y = Math.round(p.y * 10) / 10;
   const last = FOG.drag && FOG.drag.last;
-  if (last && Math.hypot(p.x - last.x, p.y - last.y) < r / 3) return;
-  if (MT.tool === 'reveal') m.fog.holes.push([Math.round(p.x), Math.round(p.y), r]);
-  else m.fog.holes = m.fog.holes.filter(([x, y]) => Math.hypot(x - p.x, y - p.y) > r);   // cover: removes the openings under the brush
+  if (last && Math.hypot(p.x - last.x, p.y - last.y) < Math.max(.5, r / 4)) return;
+  const holes = m.fog.holes = m.fog.holes || [];
+  if (MT.tool === 'reveal') holes.push([x, y, r]);
+  else {
+    // cover: exactly the brush area; strokes now entirely under it are useless and dropped
+    m.fog.holes = holes.filter(([hx, hy, hr]) => Math.hypot(hx - x, hy - y) + hr > r);
+    while (m.fog.holes.length && m.fog.holes[0][3]) m.fog.holes.shift();   // nothing open before: covering it is a no-op
+    if (m.fog.holes.length) m.fog.holes.push([x, y, r, 1]);
+  }
   if (FOG.drag) FOG.drag.last = p;
   placeFog();
 }
@@ -164,7 +176,9 @@ document.addEventListener('pointerdown', e => {
   if (MT.tool === 'erase') { const el = e.target.closest('[data-mark]'); const r = el && MT.marks.get(el.dataset.mark); if (r && (r.authorId === ME.user.$id || isMJ())) eraseMarks([r]); }
 }, true);
 document.addEventListener('pointermove', e => {
-  if (FOG.drag) { e.stopPropagation(); paintAt(e); return; }
+  if ((MT.tool === 'reveal' || MT.tool === 'cover') && S.tab === 'carte' && e.target.closest && e.target.closest('#mapsvg')) { FOG.cursor = worldAt(e); if (!FOG.drag) drawOver(); }
+  else if (FOG.cursor) { FOG.cursor = null; drawOver(); }
+  if (FOG.drag) { e.stopPropagation(); paintAt(e); drawOver(); return; }
   if (MT.live) { e.stopPropagation(); const p = worldAt(e), l = MT.live.pts[MT.live.pts.length - 1];
     if (Math.hypot(p.x - l[0], p.y - l[1]) >= screenU(3)) { MT.live.pts.push([Math.round(p.x), Math.round(p.y)]); drawOver(); } return; }
   if (MT.measure && MT.measure.on) { e.stopPropagation(); MT.measure.b = worldAt(e); drawOver(); }
@@ -175,6 +189,15 @@ document.addEventListener('pointerup', e => {
   if (MT.measure && MT.measure.on) { e.stopPropagation(); MT.measure.on = false; }
 }, true);
 document.addEventListener('click', e => { if (toolOn(e)) e.stopPropagation(); }, true);
+// [ and ] change the brush size while revealing / covering
+document.addEventListener('keydown', e => {
+  if ((e.key !== '[' && e.key !== ']') || !(MT.tool === 'reveal' || MT.tool === 'cover') || S.tab !== 'carte') return;
+  if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
+  const step = Math.max(1, Math.round(FOG.size * .15));
+  FOG.size = fogSize(FOG.size + (e.key === ']' ? step : -step));
+  document.querySelectorAll('[data-fog-size]').forEach(x => { x.value = FOG.size; });
+  drawOver(); e.preventDefault();
+});
 
 /* ---------------------------------------------------------------- marks: server and realtime */
 async function sendMark(kind, pts) {
@@ -226,6 +249,9 @@ const fogCss = document.createElement('style');
 fogCss.textContent = `
 .fog{fill:#0d0c0a}
 .fog.gm{fill:#0d0c0a;opacity:.55}
+.brush{fill:none;vector-effect:non-scaling-stroke;stroke:#f0d9b5;stroke-dasharray:4 3;opacity:.9}
+.brush.cover{stroke:#e2672c}
+.fog-size input.field[data-fog-size]{width:64px}
 .fog-tools{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
 .fog-size{display:inline-flex;align-items:center;gap:6px;font:500 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
 .fog-size input[type=range]{width:100px;accent-color:var(--orange)}

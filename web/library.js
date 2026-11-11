@@ -80,7 +80,7 @@ async function libImport(kind, file) {
       const link = l => l && l.lore && loreByTitle.has(libKey(l.lore)) ? `lore:${loreByTitle.get(libKey(l.lore))}` : l && l.map && newId.has(l.map) ? `map:${newId.get(l.map)}` : '';
       MAPS[newId.get(e.ref)] = { name: s(e.name).slice(0, 128), parent: newId.get(e.parent) || null, img: ref ? e.img : '', fileId: ref ? ref.split('/')[1] : '',
         w: +e.w || 1600, h: +e.h || 1100, vis: ['all', 'owner', 'mj'].includes(e.vis) ? e.vis : 'all', credit: '',
-        fog: e.fog && Array.isArray(e.fog.holes) ? { on: !!e.fog.on, holes: e.fog.holes.filter(h => Array.isArray(h) && h.length === 3).map(h => h.map(Number)) } : null,
+        fog: e.fog && Array.isArray(e.fog.holes) ? { on: !!e.fog.on, holes: e.fog.holes.filter(h => Array.isArray(h) && (h.length === 3 || h.length === 4)).map(h => h.map(Number)) } : null,
         pois: (e.pois || []).map(p => ({ id: uid(), x: +p.x || 0, y: +p.y || 0, label: s(p.label).slice(0, 128), icon: s(p.icon || 'pin').slice(0, 32), color: s(p.color).slice(0, 16), link: link(p.link), vis: ['all', 'owner', 'mj'].includes(p.vis) ? p.vis : 'mj', desc: s(p.desc) })),
         texts: (e.texts || []).map(t => ({ id: uid(), x: +t.x || 0, y: +t.y || 0, text: s(t.text).slice(0, 255), size: +t.size || 32, color: s(t.color).slice(0, 16), rot: +t.rot || 0, vis: ['all', 'owner', 'mj'].includes(t.vis) ? t.vis : 'all' })) };
       added++;

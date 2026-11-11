@@ -5,7 +5,8 @@
 //   TEAM tables  read team:<c>
 //   GM tables    read team:<c>/gm
 // Always: update + delete team:<c>/gm. The admin reads everything through table-level label:admin.
-import { Client, TablesDB, Permission, Role, Query } from 'node-appwrite';
+// maps: also the permissions of the map image files (see below).
+import { Client, TablesDB, Storage, Permission, Role, Query } from 'node-appwrite';
 import { DATABASE_ID, VIS_TABLES, TEAM_TABLES, GM_TABLES } from './config.js';
 
 export default async ({ req, res, log }) => {
@@ -13,10 +14,11 @@ export default async ({ req, res, log }) => {
   const tableId = row.$tableId, c = row.campaignId;
   if (!tableId || !c || ![...VIS_TABLES, ...TEAM_TABLES, ...GM_TABLES].includes(tableId)) return res.json({ skipped: true });
 
-  const db = new TablesDB(new Client()
+  const client = new Client()
     .setEndpoint(process.env.APPWRITE_FUNCTION_API_ENDPOINT)
     .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
-    .setKey(req.headers['x-appwrite-key']));
+    .setKey(req.headers['x-appwrite-key']);
+  const db = new TablesDB(client);
 
   const team = Role.team(c), gm = Role.team(c, 'gm');
   const wanted = [Permission.update(gm), Permission.delete(gm)];
@@ -53,6 +55,23 @@ export default async ({ req, res, log }) => {
       const want = [Permission.read(reader), Permission.delete(gm), ...(cm.authorId ? [Permission.delete(Role.user(cm.authorId))] : [])];
       if ([...(cm.$permissions || [])].sort().join('|') !== [...want].sort().join('|'))
         await db.updateRow({ databaseId: DATABASE_ID, tableId: 'lore_comments', rowId: cm.$id, data: {}, permissions: want }).catch(() => {});
+    }
+  }
+
+  // map images: under fog the original is readable by the GMs only, the players get the masked copy (playerFileId,
+  // drawn by the GM's app); without fog the original follows the map's visibility. Only files that already belong to
+  // this campaign are touched (a row cannot pull another campaign's image in).
+  if (tableId === 'maps') {
+    const storage = new Storage(client), reads = wanted.filter(p => p.startsWith('read('));
+    let fogOn = false; try { fogOn = !!JSON.parse(row.fog || 'null')?.on; } catch (_) {}
+    const ours = p => p.includes(`"team:${c}"`) || p.includes(`"team:${c}/gm"`);
+    for (const [fileId, rd] of [[row.imageFileId, fogOn ? [Permission.read(gm)] : reads], [fogOn ? row.playerFileId : '', reads]]) {
+      if (!fileId) continue;
+      const f = await storage.getFile({ bucketId: 'maps', fileId }).catch(() => null);
+      if (!f || !f.$permissions.some(ours)) continue;
+      const want = [...rd, Permission.update(gm), Permission.delete(gm)];
+      if ([...f.$permissions].sort().join('|') !== [...want].sort().join('|'))
+        await storage.updateFile({ bucketId: 'maps', fileId, permissions: want }).then(() => log(`maps file ${fileId} -> ${fogOn && fileId === row.imageFileId ? 'gm' : 'map'}`)).catch(e => log('file: ' + e.message));
     }
   }
 
