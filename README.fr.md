@@ -62,6 +62,10 @@ backend.
 - **Lore** : articles en Markdown (images, tableaux) en liste ou en grille, catégories colorées, articles secrets,
   recherche avancée (`"phrase exacte"`, `-exclure`), commentaires sous les articles.
 - Les commentaires suivent leur article : quand un article devient secret, ses commentaires aussi.
+- **Index des cartes**, comme celui du lore : toutes les cartes en grille de miniatures ou en liste rangée selon
+  l'arborescence (cartes locales sous leur carte parente), recherche sur les noms de cartes et de lieux, filtres par
+  carte parente et visibilité, tri. Les joueurs ne voient que les cartes partagées, leur copie masquée sous brouillard,
+  et seulement les lieux déjà découverts.
 - **Cartes** : import d'image, points d'intérêt reliés au lore, textes, mesure (à l'échelle de la carte), dessin et
   ping, partagés en direct avec toute la table.
 - **Brouillard de guerre** choisi par carte, dévoilé ou recouvert au pinceau par le MJ, avec une taille de pinceau en
@@ -115,6 +119,8 @@ backend.
 | ![Équipement : statistiques avec bonus, emplacements anatomiques](docs/screenshots/equipement.jpg) | ![Sondages](docs/screenshots/sondages.jpg) |
 | **Brouillard de guerre, vue MJ** (contour du pinceau, brouillard translucide) | **La même carte, vue joueur** (copie masquée) |
 | ![Brouillard, MJ](docs/screenshots/carte-brouillard-mj.jpg) | ![Brouillard, joueur](docs/screenshots/carte-brouillard-joueur.jpg) |
+| **Index des cartes, vue joueur** | **Index des cartes, liste MJ (arborescence)** |
+| ![Index des cartes](docs/screenshots/cartes-index.jpg) | ![Index des cartes, liste](docs/screenshots/cartes-index-liste.jpg) |
 | **Lore en grille, catégories colorées** | **Widgets « fidget »** |
 | ![Lore en grille](docs/screenshots/lore-grille.jpg) | ![Widgets](docs/screenshots/widgets.jpg) |
 | **Inventaire** | **Compétences** |

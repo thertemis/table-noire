@@ -54,6 +54,7 @@ chargé est donc la couche la plus externe. Les modules communiquent aussi par l
 | 24b | `lore.js` | page Lore : vue liste / grille, catégories (MJ), article avec titre, tableaux, commentaires | `renderLore` (remplacé), `newLore`, `deleteLore` |
 | 24c | `polls.js` | sondages : création (MJ, public choisi), vote, résultats, fermeture | `renderHeader`, `gmHub` |
 | 24d | `identity.js` | nom affiché des personnages (alias), qui lance les dés, liste des personnages au-dessus de l’identité, personnages en direct | `syncSheet`, `loadSheet`, `tIdentity`, `renderFiche` |
+| 24e | `mapindex.js` | index des cartes (grille / liste en arborescence, recherche sur cartes et lieux, filtres), miniatures chargées avec la session ; « ‹ Cartes » depuis une carte | `renderMap`, `ACT.goMap`, `ACT.srchReset`, `enterCampaign` |
 | 25 | `images.js` | recadrage des images importées, recherche d'images en onglets Wikimedia / Pixabay / DuckDuckGo | `readImage`, `tIdentity`, `itemForm` |
 | 26 | `stable.js` | anti-scintillement (dernier), vérification des modules | `render` |
 | 27 | `sw-register.js` | service worker (`sw.js`) | |

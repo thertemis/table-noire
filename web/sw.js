@@ -2,7 +2,7 @@
    Same-origin GET requests only: network first (updates show up at once), cache as fallback.
    Appwrite and CDN requests are never intercepted. */
 const CACHE = 'tn-shell-v40';
-const SHELL = ['./', 'index.html', 'config.js', 'i18n-en.js', 'i18n.js', 'app.js', 'sw-register.js', 'fidgets.js', 'portrait.js', 'settings.js', 'online.js', 'security.js', 'sheet.js', 'inventory.js', 'world.js', 'equipment.js', 'templates.js', 'campaign.js', 'rolls.js', 'initiative.js', 'reveal.js', 'fog.js', 'gmtools.js', 'backup.js', 'comfort.js', 'search.js', 'lore.js', 'polls.js', 'identity.js', 'library.js', 'notebook.js', 'npc.js', 'images.js', 'stable.js',
+const SHELL = ['./', 'index.html', 'config.js', 'i18n-en.js', 'i18n.js', 'app.js', 'sw-register.js', 'fidgets.js', 'portrait.js', 'settings.js', 'online.js', 'security.js', 'sheet.js', 'inventory.js', 'world.js', 'equipment.js', 'templates.js', 'campaign.js', 'rolls.js', 'initiative.js', 'reveal.js', 'fog.js', 'gmtools.js', 'backup.js', 'comfort.js', 'search.js', 'lore.js', 'polls.js', 'identity.js', 'mapindex.js', 'library.js', 'notebook.js', 'npc.js', 'images.js', 'stable.js',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'assets/body-front.png', 'assets/body-back.png', 'assets/organs.png', 'assets/skull.png'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });

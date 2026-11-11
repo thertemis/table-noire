@@ -67,7 +67,8 @@ ACT.revealLore = () => { const a = LORE.find(x => x.id === S.loreSel); if (a) se
 ACT.revealMap = () => {
   const m = MAPS[S.map]; if (!m) return false;
   if (String(m.img || '').startsWith('data:')) { toast('La carte est encore en cours d’envoi, réessaie dans un instant.'); return false; }
-  sendReveal({ kind: 'map', title: m.name, img: m.img }); return false;
+  const shown = m.fog && m.fog.on && m.pubId ? fileUrl('maps', m.pubId) : m.img;   // under fog: the players' masked copy
+  sendReveal({ kind: 'map', title: m.name, img: shown }); return false;
 };
 ACT.revealImage = () => {
   const input = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/png,image/jpeg,image/webp' });

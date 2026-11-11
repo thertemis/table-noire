@@ -59,6 +59,9 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 - **Lore**: list or grid of Markdown articles (images, tables), coloured categories, secret articles, advanced search
   (`"exact phrase"`, `-exclude`), comments under articles.
 - Comments follow their article: when an article becomes secret, so do its comments.
+- **Map index**, like the lore's: every map as a grid of thumbnails or a list laid out as the map tree (local maps
+  under their parent), search on map names and places, filters by parent map and visibility, sort. Players only see
+  the maps shared with them, their masked copy under fog, and only the places they have discovered.
 - **Maps**: image import, points of interest linked to the lore, labels, measure (with the map's scale), draw and
   ping, shared live with the whole table.
 - **Fog of war** set per map, revealed or covered with a brush by the GM, with a brush size in map pixels (slider,
@@ -110,6 +113,8 @@ GitHub Pages, with an [Appwrite](https://appwrite.io) server as its backend. Int
 | ![Equipment: stats with bonuses, anatomical slots](docs/screenshots/en/equipment.jpg) | ![Polls](docs/screenshots/en/polls.jpg) |
 | **Fog of war, GM view** (brush outline, translucent fog) | **The same map, player view** (masked copy) |
 | ![Fog of war, GM](docs/screenshots/en/map-fog-gm.jpg) | ![Fog of war, player](docs/screenshots/en/map-fog-player.jpg) |
+| **Map index, player view** | **Map index, GM list (map tree)** |
+| ![Map index](docs/screenshots/en/maps-index.jpg) | ![Map index, list](docs/screenshots/en/maps-index-list.jpg) |
 | **Lore, grid with coloured categories** | **Fidget widgets** |
 | ![Lore grid](docs/screenshots/en/lore-grid.jpg) | ![Widgets](docs/screenshots/en/widgets.jpg) |
 | **Inventory** | **Skills** |
