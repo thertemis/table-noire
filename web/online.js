@@ -12,7 +12,7 @@ const ME = { user: null, isAdmin: false, camp: null, role: null, chars: [], char
 const ONLINE = { unsub: null, holding: false, held: [] };
 
 /* ---------------------------------------------------------------- helpers */
-const BUILD = '2026-11-11.3';
+const BUILD = '2026-11-11.4';
 const loginEmail = id => (id.includes('@') ? id.trim() : `${id.trim().toLowerCase()}@players.tablenoire.invalid`);
 const appLink = (kind, token) => `${location.origin}${location.pathname}?${kind}=${token}`;
 async function call(functionId, body) {
@@ -149,7 +149,8 @@ async function loadNames() {
 async function enterCampaign(id) {
   loading('Ouverture de la campagne…');
   try {
-    const camp = await AW.db.getRow({ databaseId: TN.db, tableId: 'campaigns', rowId: id });
+    // the usernames ("Joueur : …"), also when the last campaign reopens directly without the campaign list
+    const [camp] = await Promise.all([AW.db.getRow({ databaseId: TN.db, tableId: 'campaigns', rowId: id }), loadNames()]);
     let role = null;
     try {
       const m = await AW.teams.listMemberships({ teamId: id, queries: [AW.Q.equal('userId', ME.user.$id)] });
